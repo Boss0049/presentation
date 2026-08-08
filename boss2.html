@@ -1,0 +1,731 @@
+<title>robolingo-lineOA — หลักการ, สาเหตุ, Pro/Con ของทุกอย่างที่แก้</title>
+<style>
+  :root {
+    --ground: #1B1E2B;
+    --surface: #242838;
+    --surface-2: #2D3146;
+    --text: #E6E8F0;
+    --muted: #9298AE;
+    --line: #393E54;
+    --accent: #4FD1C5;   /* teal — pro / fix / good */
+    --accent-2: #F2885B; /* coral — con / risk / bad */
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(79,209,197,0.07), transparent 60%),
+      radial-gradient(900px 600px at -10% 20%, rgba(242,136,91,0.05), transparent 55%),
+      var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 72px 24px 120px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(28px, 5vw, 46px);
+    line-height: 1.12;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 20px;
+  }
+
+  .lede {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 68ch;
+    margin: 0 0 8px;
+  }
+  .lede strong { color: var(--text); font-weight: 600; }
+
+  /* ---------- table of contents ---------- */
+  .toc {
+    margin: 48px 0 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 20px 22px;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  .toc ol { margin: 0; padding-left: 0; list-style: none; columns: 2; column-gap: 24px; }
+  .toc li { break-inside: avoid; margin-bottom: 6px; font-size: 14px; }
+  .toc a { color: var(--text); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc .n { font-family: var(--mono); color: var(--accent); margin-right: 8px; }
+  @media (max-width: 560px) { .toc ol { columns: 1; } }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 64px; scroll-margin-top: 24px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 12px;
+    margin-bottom: 24px;
+  }
+  .sec-num { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+  .sec-head h2 {
+    font-family: var(--mono);
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 15px; font-weight: 600; color: var(--accent); }
+  .card p { margin: 0 0 10px; }
+  .card p:last-child { margin-bottom: 0; }
+
+  code, pre { font-family: var(--mono); font-size: 13px; }
+  code.inline {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  pre {
+    background: #15171f;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    line-height: 1.6;
+    margin: 0 0 14px;
+  }
+  pre .c { color: var(--muted); }
+
+  /* ---------- pro / con grid ---------- */
+  .procon { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 4px; }
+  @media (max-width: 620px) { .procon { grid-template-columns: 1fr; } }
+  .box {
+    border-radius: 12px;
+    padding: 16px 18px;
+    border: 1px solid var(--line);
+  }
+  .box.pro { border-color: rgba(79,209,197,0.4); background: rgba(79,209,197,0.06); }
+  .box.con { border-color: rgba(242,136,91,0.4); background: rgba(242,136,91,0.06); }
+  .box .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .box.pro .label { color: var(--accent); }
+  .box.con .label { color: var(--accent-2); }
+  .box ul { margin: 0; padding-left: 18px; }
+  .box li { margin-bottom: 6px; font-size: 14px; }
+  .box li:last-child { margin-bottom: 0; }
+
+  /* ---------- glossary ---------- */
+  .glossary {
+    margin-top: 14px;
+    border-radius: 12px;
+    padding: 16px 18px;
+    border: 1px dashed var(--line);
+    background: rgba(255,255,255,0.015);
+  }
+  .glossary .gloss-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .glossary dl { margin: 0; }
+  .glossary dt {
+    font-family: var(--mono);
+    font-size: 13.5px;
+    color: var(--accent);
+    margin-top: 10px;
+  }
+  .glossary dt:first-of-type { margin-top: 0; }
+  .glossary dd {
+    margin: 3px 0 0;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  /* ---------- summary table ---------- */
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 48px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  td code { color: var(--accent); }
+
+  .foot {
+    margin-top: 72px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">robolingo-lineOA · session recap</p>
+  <h1>ทุกอย่างที่แก้ในโปรเจกต์ — หลักการ, สาเหตุ, Pro/Con</h1>
+  <p class="lede">
+    เริ่มจากเทียบ <code class="inline">robolingo-lineOA</code> กับสองโปรเจกต์อ้างอิงแล้วพบว่า
+    <strong>แย่สุดในสาม</strong> — ไล่แก้ทีละจุดจนฟีเจอร์ครบและ<strong>reliability นิ่งกว่าทั้งสองตัวอ้างอิง</strong>
+    เอกสารนี้อธิบายว่า<strong>ทำไม</strong>ต้องแก้แต่ละจุด (หลักการเบื้องหลัง ไม่ใช่แค่ "ทำอะไร")
+    พร้อม trade-off ที่ยอมรับไปในแต่ละจุด
+  </p>
+
+  <nav class="toc">
+    <p class="toc-title">สารบัญ (12 จุด)</p>
+    <ol>
+      <li><span class="n">01</span><a href="#s01">Webhook idempotency</a></li>
+      <li><span class="n">02</span><a href="#s02">Defensive send path</a></li>
+      <li><span class="n">03</span><a href="#s03">Realtime ผ่าน SSE</a></li>
+      <li><span class="n">04</span><a href="#s04">Image proxy endpoint</a></li>
+      <li><span class="n">05</span><a href="#s05">Mark-as-read sync</a></li>
+      <li><span class="n">06</span><a href="#s06">Optimistic UI + retry/dismiss</a></li>
+      <li><span class="n">07</span><a href="#s07">แก้ bubble กระพริบ (atomic swap)</a></li>
+      <li><span class="n">08</span><a href="#s08">Composer เคลียร์ทันที</a></li>
+      <li><span class="n">09</span><a href="#s09">Loading component</a></li>
+      <li><span class="n">10</span><a href="#s10">Date separator</a></li>
+      <li><span class="n">11</span><a href="#s11">Auto-mark-read + debounce/throttle</a></li>
+      <li><span class="n">12</span><a href="#s12">Test coverage 97%</a></li>
+    </ol>
+  </nav>
+
+  <!-- 01 -->
+  <section id="s01">
+    <div class="sec-head"><span class="sec-num">01</span><h2>Webhook idempotency</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>Idempotent write — ประมวลผล event เดียวกันซ้ำกี่ครั้งก็ต้องได้ state เดิม ไม่ใช่ข้อมูลซ้อนกันเพิ่มขึ้นเรื่อยๆ</p>
+      <h3>สาเหตุ</h3>
+      <p>LINE ส่ง webhook แบบ <em>at-least-once</em> (อาจส่งซ้ำได้) ตอนแรกไม่มี dedup อะไรเลย — ถ้า LINE retry ข้อความเดิมจะถูก insert ซ้ำเข้า DB</p>
+      <pre><span class="c">-- partial unique index: กัน insert ซ้ำเฉพาะแถวที่มี line_message_id จริง (inbound เท่านั้น)</span>
+CREATE UNIQUE INDEX uq_messages_line_message_id
+  ON messages (line_message_id) WHERE line_message_id IS NOT NULL;
+
+<span class="c">-- insertMessage ใช้ ON CONFLICT DO NOTHING แล้ว return null ถ้าเจอซ้ำ</span>
+<span class="c">-- webhook route: ถ้า insert คืน null = ซ้ำ ข้าม touchConversation ไปเลย</span></pre>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>DB constraint การันตี 100% ไม่มีทาง insert ซ้ำ แม้ concurrent request ก็ปลอดภัย (ไม่ใช่ check-then-insert ที่มี race)</li>
+          <li>ต้นทุนต่ำมาก — แค่เพิ่ม index ไม่ต้องเขียน logic เช็คเองในแอป</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>ถ้ามีข้อมูลซ้ำอยู่ก่อนแล้วใน DB จริง migration จะ fail ต้อง clean data ก่อน</li>
+          <li>schema.sql รันเป็น transaction เดียวทั้งไฟล์ — ถ้า statement ไหนพัง ทุก statement ใน run นั้นถูก rollback หมด (ความเสี่ยงเชิงโครงสร้างเพราะยังไม่มี migration tool)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>Idempotent write</dt>
+        <dd>การเขียนข้อมูลที่ทำซ้ำกี่ครั้งก็ได้ผลลัพธ์เดิมเป๊ะ — ไม่ใช่ยิ่งทำยิ่งข้อมูลเพิ่ม</dd>
+        <dt>At-least-once delivery</dt>
+        <dd>รูปแบบการส่ง event ของ LINE ที่การันตีว่าถึงปลายทางอย่างน้อย 1 ครั้ง แต่ยอมให้ส่งซ้ำได้ (ตรงข้ามกับ exactly-once ที่การันตีว่าส่งครั้งเดียวเป๊ะ)</dd>
+        <dt>Partial unique index</dt>
+        <dd>Index ของ DB ที่บังคับห้ามค่าซ้ำ แต่บังคับ "เฉพาะแถวที่เข้าเงื่อนไข" ที่ระบุ (ในที่นี้เฉพาะแถวที่ <code class="inline">line_message_id</code> ไม่เป็น null)</dd>
+        <dt>ON CONFLICT DO NOTHING</dt>
+        <dd>คำสั่ง SQL บอกว่า ถ้า insert ชน constraint (เช่นค่าซ้ำ) ให้ข้ามเงียบๆ ไม่ throw error</dd>
+        <dt>Race condition</dt>
+        <dd>บั๊กที่เกิดจากหลาย request/process ทำงานแข่งกันพร้อมกัน แล้วผลลัพธ์ขึ้นกับ timing ที่ควบคุมไม่ได้</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="s02">
+    <div class="sec-head"><span class="sec-num">02</span><h2>Defensive send path</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>แยก failure ที่ "retry ได้อย่างปลอดภัย" ออกจาก failure ที่ "retry แล้วอันตราย" — เพราะ side effect ภายนอก (ส่งไป LINE จริง) กับ side effect ภายใน (เขียน DB) เป็นคนละ transaction boundary ที่ล้มเหลวได้อิสระจากกัน</p>
+      <h3>สาเหตุ</h3>
+      <p>โค้ดเดิม: ถ้า push LINE สำเร็จแต่ save DB fail จะได้ error 502 เหมือนกับตอน push fail จริง — ฝั่งเรียกไม่รู้ว่าข้อความ<strong>ไปถึงลูกค้าจริงแล้วหรือยัง</strong> เสี่ยงกดส่งซ้ำแล้วลูกค้าได้ข้อความซ้ำจริง</p>
+      <pre><span class="c">// แยก try/catch เป็น 2 ก้อน + คั่นด้วย field แยกความหมาย</span>
+try { await pushText(userId, text); }
+catch (err) { return 502; }                    <span class="c">// ไม่เคยส่งถึงลูกค้า → retry ได้</span>
+
+try { insertMessage(...); touchConversation(...); }
+catch { return { delivered: true }, 500; }      <span class="c">// ถึงลูกค้าแล้ว → ห้าม retry</span></pre>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>กันการส่งข้อความซ้ำไปหาลูกค้าจริง — ความเสี่ยงระดับ user-facing ที่ร้ายแรงสุดในบรรดาบั๊กที่เจอทั้งหมด</li>
+          <li>เพิ่ม cap 5,000 ตัวอักษรตรงกับ limit จริงของ LINE ดักได้ก่อนเสียโควตายิง push</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>โค้ดซับซ้อนขึ้นเล็กน้อย (2 try/catch แทน 1)</li>
+          <li>เคส "delivered แต่ save ไม่ได้" ยังไม่มีทาง "save ใหม่อย่างเดียว" (ต้องทำ endpoint แยกถ้าจะแก้ต่อ — ตอนนี้ scope แค่ dismiss ทิ้ง)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>Retryable vs non-retryable failure</dt>
+        <dd>แยก error ที่ "ลองใหม่ได้อย่างปลอดภัย" (ผลจริงยังไม่เกิด) ออกจาก error ที่ "ห้ามลองใหม่" (ผลจริงเกิดไปแล้ว ลองใหม่จะซ้ำ)</dd>
+        <dt>Side effect</dt>
+        <dd>ผลที่เกิดขึ้นจริงในโลกภายนอกโค้ด เช่น ส่งข้อความถึงลูกค้าจริง หรือเขียนแถวลง DB จริง</dd>
+        <dt>Transaction boundary</dt>
+        <dd>ขอบเขตของงานที่ "สำเร็จหรือล้มเหลวไปด้วยกันทั้งหมด" — ในเคสนี้ push ไป LINE กับ save DB เป็นคนละขอบเขต ล้มเหลวอิสระจากกันได้</dd>
+        <dt>HTTP 502 / 500</dt>
+        <dd>502 = server เราไปเรียก service ภายนอก (LINE) แล้วมันพัง; 500 = server เราเองพังตอนทำงานภายใน</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="s03">
+    <div class="sec-head"><span class="sec-num">03</span><h2>Realtime ผ่าน SSE (polling ห่อ SSE)</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>เลือกสถาปัตยกรรมที่ง่ายที่สุดที่ยังทำงานได้จริงภายใต้ข้อจำกัดของ platform — ไม่จำเป็นต้องใช้ infra หนัก (LISTEN/NOTIFY, Redis pub-sub, paid service) ถ้าสเกลงานไม่ต้องการขนาดนั้น</p>
+      <h3>สาเหตุ</h3>
+      <p>Poll 3 วิเดิมรู้สึกช้า อยาก "realtime" แต่ Vercel serverless function มี maxDuration จำกัด ทำให้ WebSocket/SSE แบบเปิดค้างยาวๆ ทำไม่ได้ตรงๆ</p>
+      <pre><span class="c">// server-side poll DB ทุก 500ms ห่อด้วย SSE stream ที่ปิดตัวเองทุก ~50 วิ</span>
+<span class="c">// EventSource ของ browser reconnect ให้อัตโนมัติ — ไม่ต้องเขียน retry logic เอง</span></pre>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>ไม่ต้องเพิ่ม infra ใหม่เลย (ไม่มี Ably, ไม่มี Redis) — ประหยัดกว่า line-webchat-main ที่ต้องพึ่ง Ably (มีค่าใช้จ่าย)</li>
+          <li>เร็วขึ้นจริงเทียบ poll 3 วิเดิม และ EventSource reconnect ได้ฟรีจาก browser</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>ยังเป็น polling อยู่ดี — DB ถูก query ทุก 500ms ต่อ 1 tab ที่เปิดอยู่ (ถี่กว่า poll 3 วิเดิม ไม่ใช่น้อยกว่า)</li>
+          <li>reconnect ทุก ~50 วิมี overhead เล็กน้อย และถ้า deploy plan ที่ maxDuration สั้นกว่าที่คิด (เช่น Hobby ไม่เปิด Fluid Compute) จะ reconnect ถี่กว่าที่ออกแบบไว้</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>SSE (Server-Sent Events)</dt>
+        <dd>เทคโนโลยีให้ server ส่งข้อมูลไปหา browser ต่อเนื่องผ่าน connection เดียว เป็นทางเดียว (server → client เท่านั้น)</dd>
+        <dt>WebSocket</dt>
+        <dd>การเชื่อมต่อสองทาง (client ↔ server) แบบเปิดค้างไว้ตลอด ต่างจาก SSE ที่ทางเดียวและเปิดง่ายกว่าบน infra จำกัด</dd>
+        <dt>Polling</dt>
+        <dd>Browser ถามซ้ำๆเป็นช่วงเวลา (เช่นทุก 3 วินาที) ว่ามีข้อมูลใหม่ไหม — วิธีที่ง่ายที่สุดแต่ไม่ real-time จริง</dd>
+        <dt>Serverless maxDuration</dt>
+        <dd>ข้อจำกัดของ Vercel ว่า function หนึ่งรันได้นานสุดกี่วินาทีก่อนถูกตัดตาย ทำให้เปิด connection ค้างยาวๆแบบ WebSocket ตรงๆทำไม่ได้</dd>
+        <dt>EventSource</dt>
+        <dd>API ที่ built-in มากับ browser สำหรับเชื่อมต่อ SSE endpoint และ reconnect ให้อัตโนมัติเวลาสายหลุด โดยไม่ต้องเขียน retry logic เอง</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="s04">
+    <div class="sec-head"><span class="sec-num">04</span><h2>Image proxy endpoint</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>ห้ามให้ secret (channel access token) หลุดไปถึง browser — ทุกการเรียก external API ที่ต้องใช้ secret ต้องอยู่หลัง backend ของเราเอง (server-side proxy pattern)</p>
+      <h3>สาเหตุ</h3>
+      <p>LINE Content API ต้องใช้ channel access token ใน header ใช้เป็น <code class="inline">&lt;img src&gt;</code> ตรงๆ จาก browser ไม่ได้ — เดิมรูปภาพเข้ามาโชว์แค่ <code class="inline">[Unsupported: image]</code></p>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>token ไม่มีทางหลุดไปฝั่ง client เลย</li>
+          <li>proxy เช็คก่อนว่า lineMessageId มีอยู่จริงในระบบและเป็น type image ก่อนยอม fetch — กันไม่ให้กลายเป็น open relay ที่ใครก็เอา token เราไปใช้ยิง ID มั่วๆ ได้</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>ไม่มี cache ฝั่ง server — เปิดรูปซ้ำ (คนละ browser/หมด cache) ต้องยิงไป LINE ใหม่ทุกครั้ง</li>
+          <li>ใช้ <code class="inline">unoptimized</code> บน next/image เลยไม่ได้ resize/บีบอัดรูปให้เบาลง</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>Server-side proxy pattern</dt>
+        <dd>ให้ backend ของเราเป็นตัวกลางเรียก API ภายนอกแทน browser เพื่อไม่ให้ secret หลุดไปฝั่ง client</dd>
+        <dt>Channel access token</dt>
+        <dd>กุญแจลับที่ใช้ยืนยันตัวกับ LINE API — ถ้าหลุดไปฝั่ง client ใครก็เอาไปใช้แทนเราได้ทันที</dd>
+        <dt>Open relay</dt>
+        <dd>ระบบที่ยอม forward request ให้ใครก็ได้โดยไม่เช็คสิทธิ์ กลายเป็นช่องให้คนอื่นแอบใช้ token/resource ของเราฟรี</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 05 -->
+  <section id="s05">
+    <div class="sec-head"><span class="sec-num">05</span><h2>Mark-as-read sync ไป LINE</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>เช็คเอกสาร API จริงก่อนเขียนโค้ด ไม่เดาจากความเข้าใจเอง — ระหว่างทางเคยเข้าใจผิดว่า feature นี้มีผลแค่ในเครื่องมือแอดมินของ LINE เอง แต่พอไปอ่านเอกสารจริงพบว่าไม่ใช่ ต้องแก้คำอธิบายกลับ</p>
+      <h3>สาเหตุ</h3>
+      <p>อยากให้ "อ่านแล้ว" ขึ้นในแอป LINE ฝั่งลูกค้าเหมือนแชทคนทั่วไป ซึ่งไม่เกิดเองกับ Official Account ต้องเรียก API บอก LINE เอง</p>
+      <pre><span class="c">// capture markAsReadToken จาก webhook event ตอนข้อความเข้ามา (เก็บทีหลังไม่ได้)</span>
+<span class="c">// POST /v2/bot/chat/markAsRead — ยิงแบบ best-effort ไม่ block response หลัก</span></pre>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>ลูกค้าเห็น "อ่านแล้ว" จริงเหมือนแชทคนทั่วไป — ฟีเจอร์ที่คู่แข่งอ้างอิงบางตัวก็ไม่มี</li>
+          <li>fail แบบ silent ไม่ทำให้ request หลัก (mark read ในระบบเรา) พังไปด้วย — DB ของเราเป็น source of truth เสมอ</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>มี precondition นอกเหนือการควบคุมของโค้ด — ต้องเปิด "Chat" ใน LINE Official Account Manager ก่อน ถ้าลืมเปิดจะดูเหมือนฟีเจอร์ไม่ทำงาน</li>
+          <li>ถ้า sync ไป LINE fail จะแค่ log เงียบๆ — ต้องเปิด log เองถึงจะรู้ว่ามีปัญหา</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>Best-effort</dt>
+        <dd>พยายามทำแต่ถ้าล้มเหลวก็ไม่ทำให้งานหลักพังตาม — ยอมรับล่วงหน้าว่าอาจไม่สำเร็จ</dd>
+        <dt>Source of truth</dt>
+        <dd>ข้อมูลชุดที่ถือว่า "ถูกต้องที่สุด" เวลามีหลายที่เก็บข้อมูลเดียวกันแล้วขัดแย้งกัน (ในเคสนี้คือ DB ของเราเอง ไม่ใช่ LINE)</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="s06">
+    <div class="sec-head"><span class="sec-num">06</span><h2>Optimistic UI + แยก retry/dismiss</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>Optimistic UI ช่วยให้รู้สึกไวขึ้น แต่ต้อง reconcile กับความจริงจาก server ให้ถูกต้อง — และปุ่ม "retry" ต้องไม่มีวันปล่อยให้ action ที่เกิดขึ้นจริงแล้วถูกทำซ้ำ</p>
+      <h3>สาเหตุ</h3>
+      <p>เดิมไม่มี optimistic update เลย composer ค้างรอ round-trip เต็มๆ ก่อนเคลียร์ช่องพิมพ์ ไม่มีปุ่ม retry ต้องพิมพ์ใหม่เอง</p>
+      <pre><span class="c">// onMutate: ใส่ bubble ปลอม (id ติดลบ) ทันที status "pending"</span>
+<span class="c">// onError: เช็ค flag "delivered" จาก server แยก status "failed" (retry ได้) vs "delivered_unconfirmed" (ห้าม retry มีแต่ปิด)</span></pre>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>รู้สึกไวขึ้นทันที ไม่ต้องรอ network</li>
+          <li>กันการส่งซ้ำจริงในเคสหายากที่สุด (push สำเร็จแต่ save fail) ได้ถูกต้อง — ตรงกับ UX แชทสมัยใหม่</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>state machine ซับซ้อนขึ้น (3 สถานะต้องจัดการ: pending / failed / delivered_unconfirmed)</li>
+          <li>ต้องออกแบบร่วมกับ SSE merge logic อย่างระวัง ไม่งั้นเกิดบั๊กคนละแบบ (ดูข้อ 07 กับปัญหา bubble หายที่เคยเจอ)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>Optimistic UI</dt>
+        <dd>อัปเดตหน้าจอ "ล่วงหน้า" ทันทีที่ user กดทำอะไร โดยไม่รอผลจริงจาก server ก่อน — สมมติไว้ก่อนว่าจะสำเร็จ</dd>
+        <dt>Reconcile</dt>
+        <dd>กระบวนการเทียบ/ปรับ state ที่เดาไว้ล่วงหน้า (optimistic) ให้ตรงกับความจริงที่ server ตอบกลับมา</dd>
+        <dt>State machine</dt>
+        <dd>การกำหนดสถานะที่เป็นไปได้ทั้งหมดของสิ่งหนึ่งอย่างชัดเจน (ที่นี่คือ pending / failed / delivered_unconfirmed) พร้อมกฎว่าเปลี่ยนจากสถานะไหนไปไหนได้บ้าง</dd>
+        <dt>onMutate / onError</dt>
+        <dd>Hook ของ TanStack Query — <code class="inline">onMutate</code> รันก่อนยิง request จริง (ใส่ optimistic data), <code class="inline">onError</code> รันตอน request fail เพื่อ rollback/จัดการ state</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="s07">
+    <div class="sec-head"><span class="sec-num">07</span><h2>แก้ bubble กระพริบ (atomic swap)</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>การเปลี่ยน state ต้องเป็น atomic — ห้ามลบของเก่าทิ้งแล้ว "หวัง" ว่าของใหม่จะมาแทนแบบ async โดยไม่มีอะไรค้ำระหว่างนั้น</p>
+      <h3>สาเหตุ</h3>
+      <p>โค้ดเดิม: ตอนส่งสำเร็จ ลบ bubble ปลอมทิ้งทันที แล้วค่อยยิง fetch ข้อมูลจริงทีหลัง (2 ขั้นตอนแยกกัน มีช่องว่างระหว่างกลาง) — ข้อความหายไปแวบหนึ่งก่อนโผล่กลับมา สังเกตเห็นชัดขึ้นหลังจากที่ composer เร็วขึ้นแล้ว (ข้อ 08)</p>
+      <pre><span class="c">// server คืนข้อความจริงที่เพิ่งบันทึกกลับมาด้วย</span>
+<span class="c">// client สลับ (map) bubble ปลอมเป็นของจริง ในการเขียน cache "ครั้งเดียว" ไม่มีช่องว่าง</span></pre>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>หายกระพริบสนิท ไม่มี delay เพิ่ม</li>
+          <li>ประหยัดกว่าเดิมด้วยซ้ำ — ตัด fetch เพิ่มออกไปในเคสปกติ</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>client ผูกกับ shape ของ response มากขึ้น (ต้องมี field <code class="inline">message</code>) — มี fallback รองรับกรณีไม่มีแต่แทบไม่ถูกใช้จริง</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>Atomic</dt>
+        <dd>การกระทำที่เกิดขึ้น "ทั้งหมดในจังหวะเดียว" ไม่มีช่วงกึ่งสำเร็จให้คนอื่นเห็นระหว่างกลาง (all-or-nothing ในทีเดียว)</dd>
+        <dt>Cache write</dt>
+        <dd>การเขียนข้อมูลลง client-side cache (ในที่นี้คือ cache ของ TanStack Query) โดยตรง แทนการยิง fetch ใหม่</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 08 -->
+  <section id="s08">
+    <div class="sec-head"><span class="sec-num">08</span><h2>Composer เคลียร์ทันที (ไม่รอ round-trip)</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>อย่าผูก feedback ของ UI ไว้กับ network round-trip ถ้ามี optimistic state ที่อื่นให้ feedback อยู่แล้ว — สอง mechanism ที่ทำหน้าที่ซ้ำกันจะขัดกันเอง</p>
+      <h3>สาเหตุ</h3>
+      <p>ตอนทำ optimistic UI (ข้อ 06) ลืมย้อนกลับมาแก้ composer เดิม — composer ยังรอ mutation จบทั้งก้อนก่อนเคลียร์ช่องพิมพ์/ปลดล็อก input ทำให้ "รู้สึกช้า" ทั้งที่ bubble ขึ้นเร็วแล้วจริงๆ</p>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>ช่องพิมพ์รู้สึกไวทันที ไม่ขึ้นกับ network latency เลย</li>
+          <li>ลบ error banner ซ้ำซ้อนใน composer ออก (สถานะทั้งหมดไปอยู่ที่ bubble ที่เดียว)</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>ไม่มีจริง — เป็นแค่การแก้ให้ตรงกับดีไซน์ optimistic UI ที่ควรทำพร้อมกันตั้งแต่แรก</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>Round-trip</dt>
+        <dd>เวลาที่ request เดินทางไปเซิร์ฟเวอร์แล้วตอบกลับมาครบรอบ — ถ้า UI รอ round-trip ก่อนตอบสนอง จะรู้สึกช้าตาม network latency</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 09 -->
+  <section id="s09">
+    <div class="sec-head"><span class="sec-num">09</span><h2>Loading component (แยกจาก duplicate)</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>DRY — ดึง UI ที่ซ้ำกันออกมาเป็น component กลาง แทนที่จะ copy-paste markup เดิมซ้ำสองจุด</p>
+      <h3>สาเหตุ</h3>
+      <p>มี loading state 2 จุด (ConversationList, MessageThread) เป็นข้อความเฉยๆ ไม่มี spinner เลย</p>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>UI สม่ำเสมอ โค้ดซ้ำน้อยลง</li>
+          <li>ได้ spinner จริงเพิ่มมาด้วย ไม่ใช่แค่ refactor เฉยๆ</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>แทบไม่มี — งานเล็ก ความเสี่ยงต่ำ</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>DRY (Don't Repeat Yourself)</dt>
+        <dd>หลักการเขียนโค้ดไม่ให้ซ้ำ — ถ้ามี logic/UI เดิมซ้ำกันหลายที่ ให้ดึงออกมาเป็นจุดเดียวแล้วเรียกใช้ร่วมกัน</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section id="s10">
+    <div class="sec-head"><span class="sec-num">10</span><h2>Date separator (จัดกลุ่มรายวัน)</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>ลด cognitive load ของ list ที่ scroll ยาวๆ ด้วยการจัดกลุ่ม — pattern มาตรฐานที่แชทเกือบทุกแอปใช้</p>
+      <h3>สาเหตุ</h3>
+      <p>ไม่มี indicator บอกว่าข้อความไหนเป็นของวันไหนเลย</p>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>ตรงกับความคุ้นเคยของผู้ใช้จากแอปแชททั่วไป</li>
+          <li>เขียนเป็น pure function (<code class="inline">isNewDay</code>, <code class="inline">formatDateLabel</code>) เทสได้ตรงๆ ไม่ต้องพึ่ง React</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>ใช้ timezone ท้องถิ่นของ browser (ถูกต้องแล้วสำหรับคนอ่าน) แต่ทำให้เขียนเทสยากขึ้น — เจอบั๊กจริงตอนเขียนเทสเพราะเครื่องรันอยู่ timezone Bangkok (+7) แล้ว timestamp ใกล้เที่ยงคืน UTC ข้ามวันโดยไม่ตั้งใจ</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>Pure function</dt>
+        <dd>ฟังก์ชันที่ input เดียวกันได้ output เดียวกันเสมอ ไม่มี side effect ไม่พึ่ง state ภายนอก — เทสง่ายเพราะไม่ต้องพึ่งอะไรรอบข้าง</dd>
+        <dt>Cognitive load</dt>
+        <dd>ปริมาณ "ความคิด" ที่ผู้ใช้ต้องใช้ตีความข้อมูลบนจอ — list ยาวไม่มีการจัดกลุ่มทำให้ต้องคิดเยอะขึ้นว่าอันไหนเป็นของวันไหน</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section id="s11">
+    <div class="sec-head"><span class="sec-num">11</span><h2>Auto-mark-read + debounce/throttle</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>Batch/rate-limit side effect ที่มองเห็นได้จากภายนอก (เขียน DB + เรียก API บุคคลที่สาม) แทนที่จะยิงทีละครั้งต่อ event ดิบ โดยเฉพาะเมื่อต้นทาง event ถี่อยู่แล้ว (SSE poll ทุก 500ms)</p>
+      <h3>สาเหตุ</h3>
+      <p>อยาก mark-as-read อัตโนมัติตอนแอดมินเปิดแชทค้างไว้แล้วมีข้อความใหม่เข้า แต่ยิงตรงๆ ทุกครั้งที่ message เปลี่ยนจะเรียก LINE API/เขียน DB ถี่เกินจำเป็นตอนลูกค้าทักรัวๆ</p>
+      <pre><span class="c">// feedback ที่ตาเห็น (unread dot หาย) = ทันที ไม่มีความเสี่ยงเพราะไม่ยิง network</span>
+<span class="c">// การยิงจริง = debounce รอนิ่ง 1 วิ + throttle floor ห้ามถี่กว่า 3 วิ (ใช้ useRef จำเวลายิงล่าสุด)</span></pre>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>มีเพดานความถี่ชัดเจนแม้ทักต่อเนื่องยาวแค่ไหนก็ตาม (debounce เพียวๆ ไม่การันตีเพดานนี้)</li>
+          <li>ไม่มีความเสี่ยง "data หาย" เลย เพราะไม่ต้องมี server-side cache — ทุกอย่างเป็นแค่ timer ฝั่ง browser worst case แค่ยัง mark ไม่ทัน ไม่ใช่ข้อมูลหาย</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>สถานะ "อ่านแล้ว" จริงที่ sync ไป LINE อาจดีเลย์ได้ถึงไม่กี่วินาที</li>
+          <li>logic ของ effect ซับซ้อนขึ้น (ต้องมั่นใจเรื่อง race ตอนสลับแชทเร็วๆ — สุดท้าย React's effect cleanup จัดการให้แล้วโดยไม่ต้องเขียนโค้ดกันเพิ่ม)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>Debounce</dt>
+        <dd>รอจนกว่า event จะ "นิ่ง" (ไม่เกิดซ้ำ) ครบเวลาที่กำหนดค่อยยิงจริงครั้งเดียว — ถ้ามี event ใหม่เข้ามาอีกระหว่างนั้นจะรีเซ็ตนับใหม่</dd>
+        <dt>Throttle</dt>
+        <dd>จำกัดไม่ให้ยิงถี่กว่าเวลาที่กำหนด ไม่ว่า event จะเข้ามาถี่แค่ไหนก็ตาม — มีเพดาน (floor) ตายตัวที่ debounce เพียวๆไม่มี</dd>
+        <dt>useRef</dt>
+        <dd>Hook ของ React ใช้เก็บค่าที่ "จำข้ามการ re-render" ได้ โดยไม่ทำให้ component re-render ซ้ำ — ในที่นี้ใช้จำเวลายิงล่าสุด</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- 12 -->
+  <section id="s12">
+    <div class="sec-head"><span class="sec-num">12</span><h2>Test coverage 97%</h2></div>
+    <div class="card">
+      <h3>หลักการ</h3>
+      <p>เทสต้อง verify business behavior จริง ไม่ใช่ปั้นตัวเลข — ดึง pure logic ออกจากโค้ดที่ผูกกับ framework เพื่อเทสได้โดยไม่ต้องพึ่ง test infra หนักๆ และเพิ่ม infra (RTL/jsdom) เฉพาะตอนวัดแล้วเจอว่าจำเป็นจริง ไม่ใช่เดาไว้ก่อน</p>
+      <h3>สาเหตุ</h3>
+      <p>coverage เริ่มต้นแค่ 25.9% — DB layer และ React admin console (จุดที่เกิดบั๊กจริงทุกตัวในเซสชันนี้) แทบไม่มีเทสเลย</p>
+      <pre><span class="c">// ลำดับ: DB layer → routes ที่ยังไม่มีเทส → แยก pure function ออกจาก hooks/page แล้ววัดผล → ค่อยเพิ่ม RTL/jsdom เฉพาะส่วนที่ยังขาด</span>
+<span class="c">// ล็อกด้วย coverage threshold 80% ใน vitest.config.ts กันตกในอนาคต</span></pre>
+    </div>
+    <div class="procon">
+      <div class="box pro">
+        <span class="label">Pro</span>
+        <ul>
+          <li>97% ด้วยเทสที่ตรวจ behavior จริงทุกตัว (125 tests) ไม่ใช่เทสเปล่าๆ เพื่อเลขสวย</li>
+          <li>วิธี "วัดก่อนเพิ่ม infra" กันไม่ให้ลงทุน RTL เกินจำเป็นตั้งแต่ต้น</li>
+          <li>ตั้ง threshold บังคับไว้แล้ว — ถ้า coverage ตกในอนาคต <code class="inline">npm run test:coverage</code> จะ fail ทันที ไม่ใช่แค่วัดครั้งเดียวจบ</li>
+        </ul>
+      </div>
+      <div class="box con">
+        <span class="label">Con</span>
+        <ul>
+          <li>เพิ่ม dev dependency ใหม่ 2 ตัว (@testing-library/react, jsdom) และโค้ดเทสอีกก้อนใหญ่ที่ต้องดูแลต่อไป</li>
+          <li>บาง fixture ต้องระวังเรื่อง timezone-dependent flakiness เป็นพิเศษ (เจอจริงในข้อ 10)</li>
+        </ul>
+      </div>
+    </div>
+    <div class="glossary">
+      <div class="gloss-title">ศัพท์เทคนิค</div>
+      <dl>
+        <dt>Test coverage</dt>
+        <dd>เปอร์เซ็นต์ของโค้ดที่ถูกรันผ่านตอนเทส — บอกแค่ว่า "รันผ่าน" ไม่ได้การันตีว่า "ถูกต้อง" (เทสห่วยๆก็ทำ coverage สูงได้)</dd>
+        <dt>RTL (React Testing Library) / jsdom</dt>
+        <dd>เครื่องมือจำลอง browser DOM บน Node เพื่อเทส React component ได้โดยไม่ต้องเปิด browser จริง</dd>
+        <dt>Coverage threshold</dt>
+        <dd>ค่าขั้นต่ำที่บังคับไว้ใน config เทส (เช่น 80%) ถ้า coverage ตกกว่านี้จะทำให้คำสั่งเทส fail ทันที — กันไม่ให้ coverage ค่อยๆลดลงแบบไม่รู้ตัวในอนาคต</dd>
+        <dt>Flakiness</dt>
+        <dd>เทสที่ผลลัพธ์ไม่แน่นอน — บางครั้งผ่าน บางครั้ง fail โดยไม่มีการเปลี่ยนโค้ดเลย (สาเหตุในที่นี้คือ timezone ของเครื่องรัน)</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- summary -->
+  <table>
+    <thead><tr><th>#</th><th>เรื่อง</th><th>หลักการหลัก</th></tr></thead>
+    <tbody>
+      <tr><td>01</td><td>Webhook idempotency</td><td>Idempotent write ที่ DB constraint การันตี</td></tr>
+      <tr><td>02</td><td>Defensive send</td><td>แยก retryable vs non-retryable failure</td></tr>
+      <tr><td>03</td><td>Realtime SSE</td><td>เลือก infra ให้พอดีกับสเกล ไม่เกินจำเป็น</td></tr>
+      <tr><td>04</td><td>Image proxy</td><td>ห้าม secret หลุดไป client</td></tr>
+      <tr><td>05</td><td>Mark-as-read</td><td>เช็คเอกสารจริงก่อนเขียนโค้ด</td></tr>
+      <tr><td>06</td><td>Optimistic UI</td><td>Reconcile state ให้ถูก ไม่ปล่อยให้ retry ซ้ำ action จริง</td></tr>
+      <tr><td>07</td><td>Atomic swap</td><td>state transition ต้อง atomic ไม่มี gap</td></tr>
+      <tr><td>08</td><td>Composer instant</td><td>อย่าผูก feedback กับ network ถ้ามี optimistic แล้ว</td></tr>
+      <tr><td>09</td><td>Loading component</td><td>DRY</td></tr>
+      <tr><td>10</td><td>Date separator</td><td>จัดกลุ่มลด cognitive load</td></tr>
+      <tr><td>11</td><td>Auto-mark-read</td><td>Batch/rate-limit side effect ภายนอก</td></tr>
+      <tr><td>12</td><td>Test coverage</td><td>เทส behavior จริง วัดก่อนลงทุน infra</td></tr>
+    </tbody>
+  </table>
+
+  <p class="foot">
+    baloz · robolingo-lineOA · เขียนสรุปจากบทสนทนาทั้งเซสชัน — ไม่ได้ผ่านการรีวิวเพิ่มเติมหลังเขียน<br>
+    ถ้าอยากได้รายละเอียดเจาะจุดไหนเพิ่ม (โค้ดเต็ม, ไฟล์ที่แตะ, การทดสอบ) บอกได้เลย
+  </p>
+
+</div>
