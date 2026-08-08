@@ -1,0 +1,597 @@
+<title>robolingo-lineOA — Code Walkthrough: Architecture + ทุกไฟล์ทำหน้าที่อะไร/ทำไม</title>
+<style>
+  :root {
+    --ground: #1B1E2B;
+    --surface: #242838;
+    --surface-2: #2D3146;
+    --text: #E6E8F0;
+    --muted: #9298AE;
+    --line: #393E54;
+    --accent: #4FD1C5;
+    --accent-2: #F2885B;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(79,209,197,0.07), transparent 60%),
+      radial-gradient(900px 600px at -10% 20%, rgba(242,136,91,0.05), transparent 55%),
+      var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 72px 24px 120px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(26px, 4.6vw, 42px);
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 20px;
+  }
+
+  .lede {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 70ch;
+    margin: 0 0 8px;
+  }
+  .lede strong { color: var(--text); font-weight: 600; }
+
+  h2 {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 72px 0 8px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+  h2 .n { color: var(--accent); margin-right: 10px; }
+
+  h3.dir {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    margin: 36px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h3.dir::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  code, pre { font-family: var(--mono); font-size: 13px; }
+  code.inline {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+
+  /* ---------- architecture diagram ---------- */
+  .diagram {
+    margin: 28px 0 8px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 28px 20px;
+    overflow-x: auto;
+  }
+  .diagram-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 8px;
+    min-width: max-content;
+  }
+  .diagram-row.stack { flex-direction: column; gap: 6px; }
+  .node {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    text-align: center;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+  .node.ext { border-color: rgba(242,136,91,0.5); color: var(--accent-2); }
+  .node.core { border-color: rgba(79,209,197,0.5); color: var(--accent); font-weight: 600; }
+  .node .sub { display: block; color: var(--muted); font-size: 10.5px; margin-top: 2px; }
+  .arrow {
+    font-family: var(--mono);
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .arrow-v { color: var(--muted); font-size: 14px; text-align: center; margin: 2px 0; }
+  .diagram-caption {
+    margin-top: 18px;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* ---------- file cards ---------- */
+  .file-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+  }
+  .file-path {
+    font-family: var(--mono);
+    font-size: 13.5px;
+    color: var(--accent);
+    margin: 0 0 10px;
+    font-weight: 600;
+  }
+  .file-row { margin-bottom: 8px; }
+  .file-row:last-child { margin-bottom: 0; }
+  .file-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 3px;
+  }
+  .file-row p { margin: 0; font-size: 14px; }
+
+  .foot {
+    margin-top: 72px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">robolingo-lineOA · code walkthrough</p>
+  <h1>Architecture + ทุกไฟล์ทำหน้าที่อะไร ทำไมทำแบบนี้</h1>
+  <p class="lede">
+    เอกสารนี้คนละอันกับ <code class="inline">robolingo-lineoa-changes.html</code> (ซึ่งอธิบายแค่ "อะไรถูกแก้ในเซสชันที่แล้ว")
+    — เอกสารนี้ไล่ทั้ง <strong>โครงสร้าง codebase ปัจจุบัน</strong> ทุกไฟล์ที่มีความหมาย พร้อมเหตุผลเบื้องหลังของแต่ละไฟล์
+    ไม่ใช่แค่ diff ของ session เดียว
+  </p>
+
+  <!-- ============ ARCHITECTURE ============ -->
+  <h2><span class="n">01</span>Architecture Overview</h2>
+  <p>
+    ทั้งโปรเจกต์เป็น <strong>Next.js App Router โมโนลิธตัวเดียว</strong> — ไม่มี backend แยก
+    <code class="inline">app/admin</code> (หน้า UI ที่แอดมินเปิดใช้) กับ <code class="inline">app/api</code>
+    (ทุก endpoint) อยู่ deploy เดียวกัน คุยกันผ่าน HTTP ภายใน origin เดียวกันเอง
+  </p>
+
+  <div class="diagram">
+    <div class="diagram-row">
+      <div class="node ext">LINE Platform<span class="sub">webhook / push / content API</span></div>
+      <div class="arrow">↔ HTTPS ↔</div>
+      <div class="node core">Next.js App<span class="sub">app/api/* route handlers</span></div>
+      <div class="arrow">↔ SQL ↔</div>
+      <div class="node core">Postgres<span class="sub">conversations, messages</span></div>
+    </div>
+    <div class="arrow-v">↑ ↓</div>
+    <div class="diagram-row">
+      <div class="node">Admin Console (React)<span class="sub">app/admin — TanStack Query cache</span></div>
+      <div class="arrow">← SSE (poll ทุก 500ms) + axios ←→</div>
+      <div class="node">app/api/events/*, app/api/conversations/*, app/api/messages/*</div>
+    </div>
+    <p class="diagram-caption">
+      LINE เป็นฝ่าย push event เข้ามาทาง webhook เท่านั้น (เราไม่ได้ pull) —
+      ทุกอย่างอื่น (ส่งข้อความ, ดึงรูป, sync read status) เราเป็นฝ่ายเรียกออกไปเอง
+    </p>
+  </div>
+
+  <p>
+    <strong>เส้นทางข้อความเข้า (LINE → admin):</strong> LINE ยิง webhook →
+    <code class="inline">app/api/webhook/route.ts</code> ตรวจ signature → เขียนลง Postgres ผ่าน
+    <code class="inline">lib/db.ts</code> → admin เห็นข้อความใหม่เพราะ
+    <code class="inline">app/api/events/messages</code> poll DB ทุก 500ms แล้วส่งผ่าน SSE เข้า
+    TanStack Query cache ของหน้า admin
+  </p>
+  <p>
+    <strong>เส้นทางข้อความออก (admin → LINE):</strong> แอดมินพิมพ์ → optimistic bubble โผล่ทันที (client-only) →
+    <code class="inline">app/api/messages/send</code> เรียก <code class="inline">lib/line.ts</code> (Push API)
+    → ถ้าสำเร็จค่อยบันทึกลง Postgres → bubble ปลอมถูกสลับเป็นแถวจริงจาก server
+  </p>
+  <p>
+    <strong>ทำไมไม่ใช้ WebSocket จริง:</strong> Vercel serverless function มี maxDuration จำกัด
+    เปิด connection ค้างไว้ตลอดแบบ WebSocket ทำไม่ได้ตรงๆ โดยไม่พึ่ง infra เพิ่ม (Ably/Redis) —
+    เลือกใช้ SSE ที่ปิดตัวเองทุก ~50 วิ + browser's <code class="inline">EventSource</code> reconnect ให้ฟรีแทน
+  </p>
+  <p>
+    <strong>ทำไม channel access token ไม่หลุดไปฝั่ง client:</strong> ทุกจุดที่ต้องใช้ token
+    (push ข้อความ, ดึงรูปภาพ, sync read status) รวมอยู่ใน <code class="inline">lib/line.ts</code> เท่านั้น
+    เรียกได้จากฝั่ง server (API routes) เท่านั้น — browser ไม่มีทางเห็น token เลย
+  </p>
+
+  <!-- ============ ROOT CONFIG ============ -->
+  <h2><span class="n">02</span>ไฟล์ทีละไฟล์ — Config รากโปรเจกต์</h2>
+
+  <h3 class="dir">package.json</h3>
+  <div class="file-card">
+    <p class="file-path">package.json</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>ประกาศ dependencies + scripts ทั้งหมดของโปรเจกต์</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      <code class="inline">pg</code> ตรงๆ (ไม่มี ORM) เพราะ schema มีแค่ 2 ตาราง ไม่คุ้มที่จะแบก Prisma/Drizzle
+      สำหรับ query ไม่กี่แบบ · <code class="inline">@tanstack/react-query</code> เป็น cache ฝั่ง client เดียวที่ทุก data source
+      (fetch แรก, SSE, fallback poll) เขียนเข้า · <code class="inline">axios</code> ใช้ทั้งสองทาง (เรียก LINE จาก server, เรียก API ตัวเองจาก client)
+      เพื่อ error handling รูปแบบเดียวกัน (<code class="inline">axios.isAxiosError</code>) · <code class="inline">tsx</code> เป็น devDependency
+      ตัวเดียวที่มีไว้รัน <code class="inline">scripts/init-db.ts</code> (TS ตรงๆ ไม่ต้อง compile ก่อน)
+    </p></div>
+  </div>
+
+  <h3 class="dir">next.config.ts</h3>
+  <div class="file-card">
+    <p class="file-path">next.config.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>อนุญาต hostname <code class="inline">sprofile.line-scdn.net</code> ให้ผ่าน <code class="inline">next/image</code> optimizer ได้</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      next/image ปฏิเสธ optimize รูปจาก host ที่ไม่รู้จักเป็น default (กัน SSRF/abuse) —
+      รูปโปรไฟล์ LINE user โหลดมาจาก CDN นี้เท่านั้น ต้อง whitelist ตรงๆ ถึงจะใช้ <code class="inline">Avatar.tsx</code> ได้
+    </p></div>
+  </div>
+
+  <h3 class="dir">vitest.config.ts</h3>
+  <div class="file-card">
+    <p class="file-path">vitest.config.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>ตั้งค่า test runner: environment node, coverage v8, threshold 80% ทุกมิติ, include/exclude list ชัดเจน</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      exclude เฉพาะไฟล์ที่ไม่มี logic ให้เทสจริง (type-only <code class="inline">types.ts</code>, thin wiring <code class="inline">layout/providers/page.tsx</code>,
+      pass-through <code class="inline">api-client/api-endpoints</code>, one-shot script <code class="inline">init-db.ts</code>) —
+      ตั้ง threshold ไว้เป็น guardrail ถาวร ไม่ใช่แค่วัดครั้งเดียวจบ (ถ้า coverage ตกจาก 80% <code class="inline">npm run test:coverage</code> จะ fail)
+    </p></div>
+  </div>
+
+  <h3 class="dir">docker-compose.yml</h3>
+  <div class="file-card">
+    <p class="file-path">docker-compose.yml</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>รัน Postgres 16-alpine เป็น container เดียวสำหรับ dev ในเครื่อง พร้อม named volume</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      ให้ <code class="inline">DATABASE_URL</code> ใน <code class="inline">.env.local</code> มี DB จริงให้ต่อตอน dev โดยไม่ต้องติดตั้ง Postgres ลงเครื่องตรงๆ —
+      volume แยกไว้กันข้อมูล dev หายตอน container restart
+    </p></div>
+  </div>
+
+  <!-- ============ LIB ============ -->
+  <h2><span class="n">03</span>ไฟล์ทีละไฟล์ — <code class="inline">lib/</code></h2>
+
+  <h3 class="dir">lib/schema.sql</h3>
+  <div class="file-card">
+    <p class="file-path">lib/schema.sql</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>นิยาม schema ทั้งหมด — ตาราง <code class="inline">conversations</code>, <code class="inline">messages</code>, index, constraint</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      ทุกคำสั่งเป็น <code class="inline">IF NOT EXISTS</code> / <code class="inline">DROP...ADD</code> ทั้งหมด เพราะไฟล์นี้ถูกรันซ้ำได้เรื่อยๆผ่าน
+      <code class="inline">pool.query(wholeFileContents)</code> ครั้งเดียว ไม่มี migration tool ที่ track ว่ารันไปกี่ครั้งแล้ว —
+      ALTER TABLE ท้ายไฟล์ (เพิ่ม image type, <code class="inline">mark_as_read_token</code>) คือ schema evolution ที่ถูกต่อเข้าไฟล์เดิมเรื่อยๆ
+      ตาม timeline ของฟีเจอร์ที่เพิ่ม ไม่ใช่ schema แบบวางแผนไว้ตั้งแต่ต้น · partial unique index บน
+      <code class="inline">line_message_id</code> คือตัวกัน webhook ซ้ำ (LINE ส่งแบบ at-least-once)
+    </p></div>
+  </div>
+
+  <h3 class="dir">lib/types.ts</h3>
+  <div class="file-card">
+    <p class="file-path">lib/types.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>นิยาม type <code class="inline">Conversation</code>, <code class="inline">Message</code> แบบ camelCase — ใช้ร่วมกันทั้ง server และ client</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      DB เป็น snake_case (Postgres convention) แต่ TS/React ทั้งโปรเจกต์ใช้ camelCase — ไฟล์นี้คือ "สัญญา" ของ shape
+      ที่ทุกอย่างนอก <code class="inline">lib/db.ts</code> ต้องเห็น ไม่มีใครนอกนั้นเห็น snake_case เลย
+    </p></div>
+  </div>
+
+  <h3 class="dir">lib/db.ts</h3>
+  <div class="file-card">
+    <p class="file-path">lib/db.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>SQL ทั้งหมดของแอปอยู่ที่นี่ที่เดียว — CRUD conversations/messages, mark-read query</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      <code class="inline">getPool()</code> เป็น lazy singleton — สร้าง <code class="inline">Pool</code> ครั้งแรกที่ถูกเรียกแล้ว cache ไว้ ไม่เปิด connection pool
+      ใหม่ทุก request (สำคัญมากบน serverless ที่ function อาจถูกเรียกซ้ำในโปรเซสเดียวกัน) ·
+      <code class="inline">toConversation</code>/<code class="inline">toMessage</code> คือจุดแปลง snake_case→camelCase จุดเดียวของทั้งแอป ·
+      <code class="inline">insertMessage</code> ใช้ <code class="inline">ON CONFLICT ... DO NOTHING RETURNING *</code> คืน <code class="inline">null</code>
+      เมื่อเจอ duplicate — ตัวเรียก (webhook route) เช็ค null แล้วรู้ว่าควรข้าม side-effect ที่เหลือ (touchConversation) ·
+      <code class="inline">HAS_UNREAD_SUBQUERY</code> ถูกดึงเป็น constant ใช้ร่วมกันทั้ง <code class="inline">getConversation</code> และ
+      <code class="inline">listConversations</code> กัน SQL ซ้ำ
+    </p></div>
+  </div>
+
+  <h3 class="dir">lib/line.ts</h3>
+  <div class="file-card">
+    <p class="file-path">lib/line.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>ทุก HTTP call ที่ยิงออกไปหา LINE API (profile, push, content, mark-as-read)</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      <code class="inline">verifySignature</code> ใช้ HMAC-SHA256 เทียบด้วย <code class="inline">crypto.timingSafeEqual</code> ไม่ใช่ <code class="inline">===</code> ธรรมดา —
+      กัน timing attack ที่เดา signature ทีละ byte จากเวลาที่ต่างกันของ string compare ปกติ ·
+      <code class="inline">getProfile</code> จับ error เฉพาะที่มี <code class="inline">err.response</code> (คือ LINE ตอบ 4xx/5xx มาจริง) แล้วคืน null
+      ส่วน error อื่น (network ล่ม) ปล่อยให้ throw ต่อ — เพราะ "โปรไฟล์หาไม่เจอ" กับ "เน็ตล่ม" ต้องแยกกัน ·
+      ใช้ <code class="inline">pushMessages</code>/Push API เท่านั้น ไม่มี Reply API เลย เพราะ <code class="inline">replyToken</code> ของ LINE
+      มีอายุสั้นมาก ใช้ไม่ได้กับ workflow แบบแอดมินอ่านแล้วพิมพ์ตอบทีหลัง (ไม่ใช่ bot ตอบทันที)
+    </p></div>
+  </div>
+
+  <h3 class="dir">lib/sse.ts</h3>
+  <div class="file-card">
+    <p class="file-path">lib/sse.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p><code class="inline">createPollStream</code> — primitive กลาง แปลง "poll ฟังก์ชันไหนก็ได้เป็นช่วงเวลา" ให้กลายเป็น SSE stream</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      Generic ด้วย type parameter <code class="inline">&lt;T&gt;</code> เพื่อให้ทั้ง <code class="inline">events/conversations</code> และ
+      <code class="inline">events/messages</code> ใช้ตัวเดียวกันได้ (query ต่างกัน แต่กลไก stream เหมือนกันเป๊ะ) ·
+      ส่ง <code class="inline">: heartbeat</code> comment เมื่อไม่มีข้อมูลใหม่นานเกิน heartbeatIntervalMs — กัน proxy/load balancer
+      ตัด connection ที่ดู "เงียบ" เกินไปทั้งที่จริงยังไม่มีอะไรเปลี่ยน · self-close ที่ <code class="inline">maxDurationMs</code> (50s)
+      เพื่อให้ปิดตัวเอง "ก่อน" ที่ Vercel จะ force-kill (55s) แบบ error — <code class="inline">EventSource</code> ของ browser reconnect ให้อัตโนมัติ
+      จึงไม่ต้องเขียน retry logic ฝั่ง client เลย
+    </p></div>
+  </div>
+
+  <h3 class="dir">lib/utils/api-client.ts &amp; api-endpoints.ts</h3>
+  <div class="file-card">
+    <p class="file-path">lib/utils/api-client.ts, lib/utils/api-endpoints.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>axios instance กลางฝั่ง client (baseURL ว่าง) + object รวม path/URL-builder ของทุก endpoint</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      baseURL ว่างเพราะ client กับ API อยู่ origin เดียวกัน (Next.js เดียว) ไม่ต้องคอนฟิก host แยก ·
+      <code class="inline">API_ENDPOINTS</code> รวม path ทุกจุดไว้ที่เดียว — ไม่มี route ไหนถูก hardcode string ซ้ำสองที่
+      ถ้าเปลี่ยน path วันหลังแก้ไฟล์เดียว
+    </p></div>
+  </div>
+
+  <h3 class="dir">scripts/init-db.ts</h3>
+  <div class="file-card">
+    <p class="file-path">scripts/init-db.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>อ่าน <code class="inline">lib/schema.sql</code> เป็น raw text แล้วรันเป็น query เดียวใส่ <code class="inline">DATABASE_URL</code></p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      "migration tool" ที่เรียบง่ายที่สุดเท่าที่จะเป็นไปได้สำหรับโปรเจกต์ขนาดนี้ — แลกมาด้วย risk ที่ระบุไว้ใน schema.sql
+      (รันเป็น transaction เดียวทั้งไฟล์ ถ้า statement ไหนพัง rollback หมด)
+    </p></div>
+  </div>
+
+  <!-- ============ APP ROOT ============ -->
+  <h2><span class="n">04</span>ไฟล์ทีละไฟล์ — <code class="inline">app/</code> (root)</h2>
+
+  <h3 class="dir">layout.tsx / providers.tsx / page.tsx</h3>
+  <div class="file-card">
+    <p class="file-path">app/layout.tsx</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>Root HTML shell + metadata (title/description) ครอบทุกหน้าด้วย <code class="inline">&lt;Providers&gt;</code></p></div>
+  </div>
+  <div class="file-card">
+    <p class="file-path">app/providers.tsx</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>สร้าง <code class="inline">QueryClient</code> แล้วห่อ <code class="inline">QueryClientProvider</code> รอบ children</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      ต้องเป็น <code class="inline">"use client"</code> เพราะ QueryClient ต้องถูกสร้างในฝั่ง browser ตาม guidance ของ
+      TanStack Query สำหรับ App Router (ไม่ใช่สร้างบน server แล้วส่งลงมา) · <code class="inline">useState(() =&gt; new QueryClient())</code>
+      การันตีว่าสร้าง instance ครั้งเดียวตลอดชีวิต component ไม่สร้างใหม่ทุก re-render
+    </p></div>
+  </div>
+  <div class="file-card">
+    <p class="file-path">app/page.tsx</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>root route (<code class="inline">/</code>) redirect ไป <code class="inline">/admin</code> ทันที</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>ทั้งแอปคือ admin console ล้วนๆ ไม่มีหน้า public/marketing แยก จึงไม่จำเป็นต้องมีอะไรอยู่ที่ root จริง</p></div>
+  </div>
+
+  <!-- ============ API ROUTES ============ -->
+  <h2><span class="n">05</span>ไฟล์ทีละไฟล์ — <code class="inline">app/api/</code></h2>
+
+  <h3 class="dir">api/webhook/route.ts</h3>
+  <div class="file-card">
+    <p class="file-path">app/api/webhook/route.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>รับ webhook POST จาก LINE — จุดเดียวที่ข้อความจากลูกค้าเข้าสู่ระบบ</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      ตรวจ <code class="inline">verifySignature</code> เป็นบรรทัดแรกก่อนแตะอะไรเลย (fail closed — request ที่ verify ไม่ผ่านคือ hostile จนกว่าจะพิสูจน์ตรงข้าม)
+      และ <code class="inline">JSON.parse</code> "หลัง" verify ผ่านเท่านั้น ไม่เสีย CPU parse JSON ที่ไม่น่าเชื่อถือก่อน auth ·
+      วน loop แต่ละ event แล้วครอบ try/catch แยกรายตัว — event หนึ่งพังไม่ทำให้ event อื่นใน batch เดียวกันถูกข้ามไปด้วย ·
+      <code class="inline">insertMessage</code> คืน <code class="inline">null</code> = duplicate delivery (LINE ส่งซ้ำได้) → return ทันทีไม่เรียก
+      <code class="inline">touchConversation</code> ต่อ กันไม่ให้ preview/เวลาข้อความล่าสุดถูกอัปเดตซ้ำสำหรับข้อความเดิม
+    </p></div>
+  </div>
+
+  <h3 class="dir">api/conversations/route.ts &amp; [userId]/messages/route.ts</h3>
+  <div class="file-card">
+    <p class="file-path">app/api/conversations/route.ts, app/api/conversations/[userId]/messages/route.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>GET รายชื่อ conversation ทั้งหมด / GET ข้อความของ conversation หนึ่ง</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      ทั้งสองไฟล์เป็น "hollow route" — ไม่มี business logic ของตัวเอง แค่ห่อ HTTP รอบฟังก์ชันใน
+      <code class="inline">lib/db.ts</code> ตรงๆ (pattern นี้ซ้ำกับ route อื่นอีกหลายไฟล์ในโปรเจกต์) ·
+      <code class="inline">params</code> เป็น <code class="inline">Promise</code> (ตาม Next.js รุ่นใหม่) ต้อง <code class="inline">await</code> ก่อนอ่าน <code class="inline">userId</code>
+    </p></div>
+  </div>
+
+  <h3 class="dir">api/conversations/[userId]/read/route.ts</h3>
+  <div class="file-card">
+    <p class="file-path">app/api/conversations/[userId]/read/route.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>Mark ข้อความใน conversation เป็นอ่านแล้วในระบบเรา + sync สถานะไป LINE</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      <code class="inline">markConversationRead</code> (DB ของเรา = source of truth) รันก่อนเสมอและไม่มีทาง fail ตาม LINE —
+      การ sync ไป LINE ผ่าน <code class="inline">markChatAsRead</code> ครอบด้วย try/catch แยกของตัวเอง เป็น best-effort ล้วนๆ
+      ถ้า LINE call fail จะ log เงียบๆ ไม่ทำให้ response ของ endpoint นี้ fail ตาม (เพราะการ mark read ในระบบเราสำเร็จไปแล้วจริง)
+    </p></div>
+  </div>
+
+  <h3 class="dir">api/events/conversations &amp; api/events/messages</h3>
+  <div class="file-card">
+    <p class="file-path">app/api/events/conversations/route.ts, app/api/events/messages/route.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>SSE endpoint — stream การเปลี่ยนแปลงของ conversation list / message list แบบ real-time</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      <code class="inline">runtime = "nodejs"</code> (ไม่ใช้ edge) เพราะ driver <code class="inline">pg</code> ต้องพึ่ง Node API ·
+      <code class="inline">dynamic = "force-dynamic"</code> ปิด static/cache behavior ของ Next — endpoint นี้ต้องรันสดทุก request เสมอ ·
+      <code class="inline">maxDuration = 55</code> เผื่อ headroom ใต้ hard limit 60s ของ Vercel Hobby tier ·
+      ห่อ <code class="inline">createPollStream</code> รอบ <code class="inline">listConversations</code>/<code class="inline">listMessages</code> poll ทุก 500ms
+      แล้วปิดตัวเองที่ 50s (ก่อน maxDuration จริง) ให้ client reconnect เอง
+    </p></div>
+  </div>
+
+  <h3 class="dir">api/messages/[lineMessageId]/image/route.ts</h3>
+  <div class="file-card">
+    <p class="file-path">app/api/messages/[lineMessageId]/image/route.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>Proxy รูปภาพจาก LINE Content API มาให้ browser แสดงผล โดยไม่ให้ token หลุด</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      เช็ค DB ก่อนเสมอว่า <code class="inline">lineMessageId</code> นี้มีอยู่จริงในระบบและเป็น <code class="inline">messageType === "image"</code>
+      ก่อนจะยอมยิงไป LINE — นี่คือสิ่งที่กัน endpoint นี้ไม่ให้กลายเป็น open relay ให้ใครก็เอา id มั่วๆมาแล้วใช้ token ของเรายิงแทน ·
+      <code class="inline">Cache-Control: private, max-age=3600, immutable</code> เพราะเนื้อหารูปของ message id หนึ่งไม่มีวันเปลี่ยนอีก
+      cache ได้เต็มที่โดยไม่ต้องกลัว stale
+    </p></div>
+  </div>
+
+  <h3 class="dir">api/messages/send/route.ts</h3>
+  <div class="file-card">
+    <p class="file-path">app/api/messages/send/route.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>แอดมินส่งข้อความออกไปหาลูกค้า — เรียก LINE Push API แล้วบันทึกลง DB</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      <code class="inline">MAX_MESSAGE_LENGTH = 5000</code> เช็คก่อนยิง network ใดๆเลย (fail ที่ถูกที่สุด) ตรงกับ limit จริงของ LINE ·
+      เช็ค <code class="inline">getConversation</code> ก่อน กันส่งไปหา user ที่ระบบไม่รู้จัก (ไม่เคยมีข้อความเข้ามาก่อน) ·
+      แยก try/catch เป็น 2 ก้อนต่างความหมาย: ก้อนแรกครอบ <code class="inline">pushText</code> — ถ้า fail คืน 502 (ยังไม่ถึงลูกค้า retry ได้ปลอดภัย)
+      ก้อนสองครอบ <code class="inline">insertMessage</code>+<code class="inline">touchConversation</code> — ถ้า fail คืน 500 พร้อม flag
+      <code class="inline">delivered: true</code> (ถึงลูกค้าจริงแล้ว ห้าม retry) — flag นี้คือสิ่งที่ฝั่ง client (<code class="inline">isDeliveredUnconfirmedError</code>)
+      ใช้แยกสองเคสนี้ออกจากกัน
+    </p></div>
+  </div>
+
+  <!-- ============ ADMIN CONSOLE ============ -->
+  <h2><span class="n">06</span>ไฟล์ทีละไฟล์ — <code class="inline">app/admin/</code> (Admin Console)</h2>
+
+  <h3 class="dir">admin/page.tsx</h3>
+  <div class="file-card">
+    <p class="file-path">app/admin/page.tsx</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>หน้า admin console ทั้งหน้า — layout 2 คอลัมน์ (list + thread), เก็บ state ที่เลือกอยู่, ต่อทุก hook เข้าด้วยกัน</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      ใช้ <code class="inline">useState</code> ธรรมดาเก็บ <code class="inline">selectedUserId</code>/<code class="inline">search</code>/<code class="inline">isSmallPanel</code>
+      ไม่ดึง Zustand มาใช้เหมือนโปรเจกต์อื่น (เช่น bbl-react-native-demo) เพราะเป็นแค่หน้าเดียว state ไม่ข้ามหน้า ไม่มีเหตุผลจริงให้ใช้ global store ·
+      <code class="inline">matchMedia</code> effect เช็ค breakpoint 768px เอง (ไม่ใช้ CSS breakpoint เฉยๆ) เพราะ JS ต้อง "รู้" โหมดปัจจุบันจริงๆ
+      เพื่อ render ต่างกัน (ซ่อน search input, ย้ายตำแหน่ง unread dot) ไม่ใช่แค่ซ่อน/โชว์ด้วย CSS · effect ที่ auto-mark-read
+      (บรรทัด 62-84) คือ debounce+throttle ตามหลักการในเอกสาร changes ข้อ 11 — อัปเดต unread dot ทันทีแบบไม่มี network
+      (เขียน cache ตรง) ส่วนการยิงจริงไป DB/LINE ถูกหน่วงด้วย <code class="inline">computeMarkReadDelay</code> +
+      <code class="inline">lastMarkedAtRef</code> กันยิงถี่เกินไปตอนลูกค้าทักรัว
+    </p></div>
+  </div>
+
+  <h3 class="dir">admin/hooks.ts</h3>
+  <div class="file-card">
+    <p class="file-path">app/admin/hooks.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>TanStack Query hooks ทั้งหมด — <code class="inline">useConversations</code>, <code class="inline">useMessages</code>, <code class="inline">useSendMessage</code>, <code class="inline">useMarkConversationRead</code></p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      SSE ใน <code class="inline">useConversations</code>/<code class="inline">useMessages</code> เขียนข้อมูลที่ได้ตรงเข้า query cache เดียวกันกับที่
+      fetch แรกและ fallback poll (20s — เผื่อ environment ที่ ad-blocker/proxy บล็อค <code class="inline">text/event-stream</code>) เขียนอยู่
+      — component ไม่ต้องรู้เลยว่าข้อมูลมาจากทางไหน · <code class="inline">withPending</code> คือ invariant guard ที่สำคัญที่สุดของไฟล์นี้:
+      ทุกการเขียนเข้า cache ข้อความต้องกัน optimistic bubble (id ติดลบ) ที่ยังค้างอยู่ไว้เสมอ ไม่งั้นข้อความที่กำลังส่งจะหายวับไปตอน
+      SSE/poll รอบใหม่มาถึง · <code class="inline">useSendMessage</code> ใช้ <code class="inline">onMutate</code>/<code class="inline">onError</code>/<code class="inline">onSuccess</code>
+      ครบ 3 จังหวะของ optimistic UI: ใส่ bubble ปลอมก่อน → ถ้า fail แยก "failed" (retry ได้) กับ "delivered_unconfirmed"
+      (ห้าม retry) ผ่าน <code class="inline">isDeliveredUnconfirmedError</code> อ่าน flag จาก server → ถ้าสำเร็จสลับ bubble ปลอมเป็นแถวจริง
+      ในการเขียนครั้งเดียว (<code class="inline">applySendSuccess</code>) ไม่ใช่ลบแล้วรอ fetch ใหม่ (นี่คือจุดที่แก้บั๊ก bubble กระพริบ)
+    </p></div>
+  </div>
+
+  <h3 class="dir">admin/mark-read.ts</h3>
+  <div class="file-card">
+    <p class="file-path">app/admin/mark-read.ts</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p><code class="inline">hasUnreadInboundMessage</code> + <code class="inline">computeMarkReadDelay</code> — pure function 2 ตัวที่แยกออกมาจาก hooks/page</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      แยกออกมาโดยเฉพาะเพื่อให้เทสได้โดยไม่ต้องพึ่ง React/DOM เลย — เป็น logic ล้วนๆ ·
+      <code class="inline">Math.max(1000, ...)</code> การันตี quiet period อย่างน้อย 1 วินาทีเสมอ แม้ <code class="inline">minIntervalMs</code>
+      จะผ่านไปเกือบครบแล้วก็ตาม กันไม่ให้ยิงทันทีทุกข้อความตอนลูกค้าทักถี่ๆ
+    </p></div>
+  </div>
+
+  <h3 class="dir">admin/components/Avatar.tsx</h3>
+  <div class="file-card">
+    <p class="file-path">app/admin/components/Avatar.tsx</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>Wrapper บาง ๆ รอบ <code class="inline">next/image</code> สำหรับรูปโปรไฟล์ LINE user พร้อมค่า default</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>เป็นเหตุผลตรงๆที่ <code class="inline">next.config.ts</code> ต้องมี <code class="inline">remotePatterns</code> — ไม่มี Avatar นี้ก็ไม่จำเป็นต้องเปิด host นั้น</p></div>
+  </div>
+
+  <h3 class="dir">admin/components/ConversationList.tsx</h3>
+  <div class="file-card">
+    <p class="file-path">app/admin/components/ConversationList.tsx</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>Render รายชื่อ conversation ฝั่งซ้าย จัดการ loading/error/empty state ของตัวเอง</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      จัดการ 3 state (loading/error/empty) อยู่ในตัวเองไม่ผลักขึ้นไปให้ <code class="inline">page.tsx</code> ตัดสิน — parent ส่งแค่ data+callback ·
+      <code class="inline">isSmallPanel</code> เปลี่ยนทั้ง layout (icon-only vs ชื่อ+preview) และตำแหน่งจุด unread (badge บน avatar vs จุดลอย)
+      เป็นสองรูปแบบการแสดงผลที่ต่างกันจริงสำหรับ boolean ตัวเดียว จึงต้อง thread ผ่าน prop ไม่ใช่แก้ด้วย CSS breakpoint เฉยๆ
+    </p></div>
+  </div>
+
+  <h3 class="dir">admin/components/DateSeparator.tsx</h3>
+  <div class="file-card">
+    <p class="file-path">app/admin/components/DateSeparator.tsx</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p><code class="inline">isNewDay</code>/<code class="inline">formatDateLabel</code> (pure function) + component แสดงป้ายวันที่คั่นกลุ่มข้อความ</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      ตั้งใจใช้ timezone ท้องถิ่นของ browser (<code class="inline">new Date()</code> ตรงๆ ไม่แปลง UTC) เพื่อให้ "วันนี้/เมื่อวาน" ตรงกับที่แอดมินรู้สึกจริง
+      — แลกมาด้วย test flakiness ที่เจอจริงตอนเครื่องรัน timezone Bangkok (+7) แล้ว timestamp ใกล้เที่ยงคืน UTC ข้ามวันโดยไม่ตั้งใจ
+    </p></div>
+  </div>
+
+  <h3 class="dir">admin/components/Loading.tsx</h3>
+  <div class="file-card">
+    <p class="file-path">app/admin/components/Loading.tsx</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>Spinner + label ใช้ร่วมกันทั้ง ConversationList และ MessageThread</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>ดึงออกมาจุดเดียวเพื่อฆ่า duplication ที่มี loading text เดิมซ้ำสองที่ (DRY) — ได้ spinner จริงเพิ่มมาด้วยไม่ใช่แค่ refactor</p></div>
+  </div>
+
+  <h3 class="dir">admin/components/MessageBubble.tsx</h3>
+  <div class="file-card">
+    <p class="file-path">app/admin/components/MessageBubble.tsx</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>Render ข้อความ 1 ก้อน — แตกตาม <code class="inline">messageType</code> (text/unsupported/image) และแยกตาม <code class="inline">status</code> (pending/failed/delivered_unconfirmed)</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      สอง conditional แยกกันเพราะเป็นสองแกนที่ไม่เกี่ยวกัน — "ข้อความมีเนื้อหาแบบไหน" กับ "สถานะการส่งของ optimistic bubble"
+      รวมเป็น switch เดียวจะงงกว่า · รูปภาพยิงไป <code class="inline">/api/messages/[lineMessageId]/image</code> (proxy ของเราเอง)
+      ไม่มีทางยิง URL ของ LINE ตรงๆจาก browser และใช้ <code class="inline">unoptimized</code> เพราะรูปนี้ same-origin อยู่แล้ว
+      ให้ next/image optimizer มา fetch+resize ซ้ำอีกชั้นไม่มีประโยชน์
+    </p></div>
+  </div>
+
+  <h3 class="dir">admin/components/MessageComposer.tsx</h3>
+  <div class="file-card">
+    <p class="file-path">app/admin/components/MessageComposer.tsx</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>ช่องพิมพ์ข้อความ + ปุ่มส่ง</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      <code class="inline">setText("")</code> เคลียร์ทันทีตอน submit "ก่อน" ที่ <code class="inline">onSendText</code>/mutation จะเริ่มด้วยซ้ำ —
+      composer ต้องไม่รอ network round-trip เพราะ optimistic bubble (ใน hooks.ts) ให้ feedback "ส่งแล้ว" อยู่ที่อื่นแล้ว
+      สอง mechanism ที่ทำหน้าที่ซ้ำกันจะขัดกันเองถ้า composer ยังรอ mutation จบด้วย
+    </p></div>
+  </div>
+
+  <h3 class="dir">admin/components/MessageThread.tsx</h3>
+  <div class="file-card">
+    <p class="file-path">app/admin/components/MessageThread.tsx</p>
+    <div class="file-row"><span class="file-label">หน้าที่</span><p>Render ข้อความทั้งหมดแบบ scroll ได้ พร้อม date separator แทรกอัตโนมัติ, auto-scroll ไปล่างสุด</p></div>
+    <div class="file-row"><span class="file-label">เหตุผล</span><p>
+      auto-scroll ใช้ ref + <code class="inline">scrollTo</code> ตรงๆ ไม่มี scroll-anchoring library เพราะเป็น admin console ที่ history
+      ไม่ยาวมาก ไม่ใช่แอปแชทแบบ infinite-scroll · <code class="inline">isNewDay</code> ถูกเช็คแบบ inline ตอน render (เทียบกับ message ก่อนหน้าตัวมันเองใน array)
+      ไม่ preprocess เป็น array กลุ่มแยก — <code class="inline">messages</code> ยังเป็น source of truth เดียวของ order/key ทั้งหมด
+    </p></div>
+  </div>
+
+  <p class="foot">
+    baloz · robolingo-lineOA · code walkthrough เขียนจากการอ่าน codebase จริงทั้งหมด (69 ไฟล์ ไม่รวม node_modules/.next/.git)
+    ณ commit ล่าสุดบน master — ถ้าโค้ดเปลี่ยนหลังจากนี้ เอกสารนี้จะ stale ตาม ให้เทียบกับโค้ดจริงก่อนเชื่อ 100%
+  </p>
+
+</div>
