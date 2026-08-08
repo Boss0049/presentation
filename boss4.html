@@ -1,0 +1,1541 @@
+<title>Senior Fullstack Interview Cheat Sheet — LINE Web Chat / Realtime Chat System</title>
+<style>
+  :root {
+    --ground: #1B1E2B;
+    --surface: #242838;
+    --surface-2: #2D3146;
+    --text: #E6E8F0;
+    --muted: #9298AE;
+    --line: #393E54;
+    --accent: #4FD1C5;
+    --accent-2: #F2885B;
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(79,209,197,0.07), transparent 60%),
+      radial-gradient(900px 600px at -10% 20%, rgba(242,136,91,0.05), transparent 55%),
+      var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 960px; margin: 0 auto; padding: 72px 24px 140px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(26px, 4.6vw, 42px);
+    line-height: 1.15;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+  }
+  .subtitle {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--accent-2);
+    margin: 0 0 20px;
+  }
+
+  .lede {
+    font-size: 17px;
+    color: var(--muted);
+    max-width: 70ch;
+    margin: 0 0 8px;
+  }
+  .lede strong { color: var(--text); font-weight: 600; }
+
+  /* ---------- TOC ---------- */
+  .toc {
+    margin: 40px 0 0;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 22px 24px;
+  }
+  .toc-title {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+  .toc ol { margin: 0; padding-left: 0; list-style: none; columns: 2; column-gap: 28px; }
+  .toc li { break-inside: avoid; margin-bottom: 8px; font-size: 13.5px; }
+  .toc a { color: var(--text); text-decoration: none; }
+  .toc a:hover { color: var(--accent); }
+  .toc .n { font-family: var(--mono); color: var(--accent); margin-right: 8px; }
+  @media (max-width: 560px) { .toc ol { columns: 1; } }
+
+  /* ---------- sections ---------- */
+  h2 {
+    font-family: var(--mono);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 68px 0 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+    scroll-margin-top: 24px;
+  }
+  h2 .n { color: var(--accent); margin-right: 10px; }
+
+  h3.sub {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 0.01em;
+    margin: 28px 0 10px;
+  }
+
+  p { margin: 0 0 14px; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 4px; }
+
+  code, pre { font-family: var(--mono); font-size: 13px; }
+  code.inline {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: var(--accent);
+  }
+
+  pre.diagram {
+    background: #15171f;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    line-height: 1.55;
+    margin: 0 0 16px;
+    color: var(--text);
+    white-space: pre;
+  }
+
+  blockquote.quote {
+    margin: 0 0 16px;
+    padding: 12px 18px;
+    border-left: 3px solid var(--accent);
+    background: rgba(79,209,197,0.06);
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
+    color: var(--text);
+    font-size: 14.5px;
+  }
+  blockquote.quote p { margin: 0 0 8px; }
+  blockquote.quote p:last-child { margin-bottom: 0; }
+
+  blockquote.script {
+    margin: 0 0 16px;
+    padding: 18px 22px;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    border-radius: 0 12px 12px 0;
+    font-size: 14.5px;
+  }
+  blockquote.script p { margin: 0 0 12px; }
+  blockquote.script p:last-child { margin-bottom: 0; }
+
+  /* ---------- pro/con pairs ---------- */
+  .procon { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 4px 0 16px; }
+  @media (max-width: 620px) { .procon { grid-template-columns: 1fr; } }
+  .box {
+    border-radius: 12px;
+    padding: 14px 18px;
+    border: 1px solid var(--line);
+  }
+  .box.con { border-color: rgba(242,136,91,0.4); background: rgba(242,136,91,0.06); }
+  .box.pro { border-color: rgba(79,209,197,0.4); background: rgba(79,209,197,0.06); }
+  .box .label {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .box.con .label { color: var(--accent-2); }
+  .box.pro .label { color: var(--accent); }
+  .box p { margin: 0; font-size: 14px; font-style: italic; }
+
+  /* ---------- QA cards ---------- */
+  .qa-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 10px;
+  }
+  .qa-card .q {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 600;
+    margin: 0 0 6px;
+  }
+  .qa-card .a { margin: 0; font-size: 14px; }
+
+  /* ---------- checklist ---------- */
+  .checklist {
+    margin: 0 0 16px;
+    padding: 0;
+    list-style: none;
+    columns: 2;
+    column-gap: 28px;
+  }
+  .checklist li {
+    break-inside: avoid;
+    margin-bottom: 8px;
+    font-size: 14px;
+    padding-left: 26px;
+    position: relative;
+  }
+  .checklist li::before {
+    content: "☐";
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 15px;
+  }
+  @media (max-width: 560px) { .checklist { columns: 1; } }
+
+  .final-quote {
+    margin: 24px 0 0;
+    padding: 20px 24px;
+    border: 1px solid rgba(79,209,197,0.4);
+    background: rgba(79,209,197,0.06);
+    border-radius: 14px;
+    text-align: center;
+  }
+  .final-quote .bad { color: var(--accent-2); font-family: var(--mono); font-size: 14px; margin-bottom: 10px; }
+  .final-quote .good { color: var(--accent); font-family: var(--mono); font-size: 14.5px; font-weight: 600; }
+
+  .foot {
+    margin-top: 72px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  details.section {
+    margin: 68px 0 0;
+    border-bottom: 1px solid var(--line);
+  }
+  details.section summary {
+    font-family: var(--mono);
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    padding-bottom: 12px;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  details.section summary::-webkit-details-marker { display: none; }
+  details.section summary::before {
+    content: "▸";
+    color: var(--muted);
+    font-size: 13px;
+    margin-right: 8px;
+    transition: transform 0.15s ease;
+    flex-shrink: 0;
+  }
+  details.section[open] summary::before {
+    transform: rotate(90deg);
+  }
+  details.section summary:hover { color: var(--accent); }
+  details.section .section-body { padding: 4px 0 32px; }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">interview prep · cheat sheet</p>
+  <h1>Senior Fullstack Interview Cheat Sheet</h1>
+  <p class="subtitle">LINE Web Chat / Realtime Chat System</p>
+  <p class="lede">
+    ไม่ใช่ cheat sheet ของ "Technology ที่ต้องรู้" — แต่เป็น cheat sheet ของ
+    <strong>วิธีคิด</strong> ที่ทำให้คำตอบดูเป็น Senior: Requirement → Scale → Bottleneck → Failure →
+    Trade-off → Technology เสมอ ไม่ใช่ทางกลับ
+  </p>
+
+  <nav class="toc">
+    <p class="toc-title">สารบัญ</p>
+    <ol>
+      <li><span class="n">0</span><a href="#s0">Mindset ตอนสัมภาษณ์</a></li>
+      <li><span class="n">1</span><a href="#s1">Frontend: React / Next.js</a></li>
+      <li><span class="n">2</span><a href="#s2">Backend: Go vs NestJS</a></li>
+      <li><span class="n">3</span><a href="#s3">API Server vs Service</a></li>
+      <li><span class="n">4</span><a href="#s4">Load Balancer</a></li>
+      <li><span class="n">5-8</span><a href="#s5">WebSocket, SSE, Connection Registry</a></li>
+      <li><span class="n">9-17</span><a href="#s9">Kafka (Producer/Consumer/Partition/Offset)</a></li>
+      <li><span class="n">18-22</span><a href="#s18">Chat Architecture แบบเต็ม + Fan-out</a></li>
+      <li><span class="n">23</span><a href="#s23">Microservice Decision</a></li>
+      <li><span class="n">24-26</span><a href="#s24">Database: SQL/NoSQL/Redis</a></li>
+      <li><span class="n">27-30</span><a href="#s27">User Offline, Retry, WS vs Consumer</a></li>
+      <li><span class="n">31-34</span><a href="#s31">Idempotency &amp; Outbox Pattern</a></li>
+      <li><span class="n">35-40</span><a href="#s35">Encryption &amp; Security</a></li>
+      <li><span class="n">41-44</span><a href="#s41">Presence, Read Status, Ordering</a></li>
+      <li><span class="n">45</span><a href="#s45">Failure Scenario ที่ต้องเตรียม</a></li>
+      <li><span class="n">46-48</span><a href="#s46">Scale Decision Framework</a></li>
+      <li><span class="n">49-53</span><a href="#s49">ซ้อมตอบ Interview</a></li>
+      <li><span class="n">54</span><a href="#s54">Core Concept 15 เรื่อง</a></li>
+      <li><span class="n">55</span><a href="#s55">สิ่งที่ Interviewer วัดจริงๆ</a></li>
+      <li><span class="n">✓</span><a href="#checklist">Final Checklist</a></li>
+    </ol>
+  </nav>
+
+  <!-- 0 -->
+  <details class="section" id="s0"><summary><span class="n">0</span>Mindset ที่ต้องใช้ตอนสัมภาษณ์</summary><div class="section-body">
+  <p>เวลาโดนถาม Architecture อย่ารีบตอบว่า</p>
+  <blockquote class="quote"><p>"ใช้ Go + Kafka + Redis + Microservice"</p></blockquote>
+  <p>ให้คิดตามลำดับ:</p>
+  <pre class="diagram">Requirement
+    ↓
+Traffic / Scale
+    ↓
+Bottleneck
+    ↓
+Failure Scenario
+    ↓
+Consistency / Reliability
+    ↓
+Trade-off
+    ↓
+Technology</pre>
+  <p>Senior ไม่ได้วัดว่าเรารู้ Technology เยอะแค่ไหน แต่ดูว่า</p>
+  <blockquote class="quote"><p>"เรารู้ไหมว่าทำไมต้องใช้มัน และถ้าไม่ใช้จะเกิดอะไรขึ้น"</p></blockquote>
+
+  <!-- 1 -->
+  </div></details>
+  <details class="section" id="s1"><summary><span class="n">1</span>Frontend: React / Next.js</summary><div class="section-body">
+  <h3 class="sub">React</h3>
+  <p>เหมาะกับ</p>
+  <ul>
+    <li>SPA</li>
+    <li>Backoffice</li>
+    <li>Internal System</li>
+    <li>SEO ไม่สำคัญ</li>
+    <li>Client-heavy application</li>
+  </ul>
+  <h3 class="sub">Next.js</h3>
+  <p>เหมาะกับ</p>
+  <ul>
+    <li>SEO</li>
+    <li>SSR</li>
+    <li>SSG</li>
+    <li>Routing</li>
+    <li>Performance / Initial Load</li>
+    <li>Fullstack Web Application</li>
+  </ul>
+  <h3 class="sub">คำตอบ Interview</h3>
+  <blockquote class="quote"><p>"ผมจะเลือกจาก Requirement มากกว่าความชอบครับ ถ้าเป็น Backoffice ที่ SEO ไม่สำคัญ React ก็เพียงพอ แต่ถ้าเป็น Public Web ที่ต้องการ SEO หรือ SSR ผมจะพิจารณา Next.js"</p></blockquote>
+
+  <!-- 2 -->
+  </div></details>
+  <details class="section" id="s2"><summary><span class="n">2</span>Backend: Go vs NestJS</summary><div class="section-body">
+  <h3 class="sub">Go</h3>
+  <p>ข้อดี</p>
+  <ul>
+    <li>Performance สูง</li>
+    <li>Goroutine</li>
+    <li>Concurrency</li>
+    <li>Memory footprint ค่อนข้างต่ำ</li>
+    <li>เหมาะกับ High Concurrent System</li>
+  </ul>
+  <p>เหมาะกับ</p>
+  <ul>
+    <li>Realtime</li>
+    <li>Network Service</li>
+    <li>High Throughput</li>
+    <li>Microservice</li>
+  </ul>
+  <h3 class="sub">NestJS</h3>
+  <p>ข้อดี</p>
+  <ul>
+    <li>TypeScript</li>
+    <li>Development เร็ว</li>
+    <li>Structure ชัด</li>
+    <li>Ecosystem ของ JS ดี</li>
+    <li>ทีม Frontend/JS สามารถต่อยอดง่าย</li>
+  </ul>
+  <div class="procon">
+    <div class="box con">
+      <span class="label">ห้ามตอบแบบนี้</span>
+      <p>"Go รับ Request ได้มากกว่า NestJS เสมอ" — เพราะ Performance ขึ้นกับ Workload, Database, Network, Architecture, Implementation, Hardware</p>
+    </div>
+    <div class="box pro">
+      <span class="label">คำตอบที่ดีกว่า</span>
+      <p>"ถ้า Requirement เป็น High Concurrency และทีมมีความสามารถด้าน Go ผมจะพิจารณา Go แต่ถ้าทีมถนัด TypeScript และ Requirement ไม่ได้ต้องการ Scale สูงมาก NestJS ก็อาจให้ Development Speed และ Maintainability ที่ดีกว่าครับ"</p>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  </div></details>
+  <details class="section" id="s3"><summary><span class="n">3</span>API Server vs Service</summary><div class="section-body">
+  <h3 class="sub">API Server — Entry Point</h3>
+  <pre class="diagram">Client
+  ↓
+API Server
+  ↓
+Controller / Handler</pre>
+  <p>เช่น</p>
+  <pre class="diagram">POST /messages
+GET /messages
+GET /rooms</pre>
+  <h3 class="sub">Service Layer — Business Logic</h3>
+  <pre class="diagram">Controller
+    ↓
+MessageService
+    ↓
+Database</pre>
+  <p>เช่น</p>
+  <pre class="diagram">validate permission
+create message
+save message
+publish event</pre>
+  <h3 class="sub">แต่คำว่า Service มีอีกความหมาย — Microservice</h3>
+  <pre class="diagram">User Service
+Message Service
+Notification Service</pre>
+  <p>อย่าสับสนกับ Service Layer ใน Code</p>
+
+  <!-- 4 -->
+  </div></details>
+  <details class="section" id="s4"><summary><span class="n">4</span>Load Balancer</summary><div class="section-body">
+  <p>Load Balancer = ตัวกระจาย Traffic</p>
+  <pre class="diagram">                Load Balancer
+                     │
+        ┌────────────┼────────────┐
+        ▼            ▼            ▼
+      API-1        API-2        API-3</pre>
+  <p>ช่วยให้ Scale Horizontally ได้ เช่น</p>
+  <pre class="diagram">100,000 Requests
+        ↓
+Load Balancer
+        ↓
+API-1
+API-2
+API-3
+API-4</pre>
+  <p>Algorithm ที่ควรรู้</p>
+  <ul>
+    <li>Round Robin</li>
+    <li>Least Connections</li>
+    <li>Weighted</li>
+    <li>IP Hash</li>
+  </ul>
+
+  <!-- 5 -->
+  </div></details>
+  <details class="section" id="s5"><summary><span class="n">5</span>WebSocket</summary><div class="section-body">
+  <p>WebSocket = Persistent / Long-lived connection ต่างจาก HTTP Request ปกติ</p>
+  <h3 class="sub">HTTP</h3>
+  <pre class="diagram">Client → Request
+Server → Response
+จบ</pre>
+  <h3 class="sub">WebSocket</h3>
+  <pre class="diagram">Client ═════════ Server
+       connection ค้าง</pre>
+  <p>สามารถสื่อสารได้สองทาง</p>
+  <pre class="diagram">Client → Server
+Server → Client</pre>
+  <p>เหมาะกับ</p>
+  <ul>
+    <li>Chat</li>
+    <li>Typing Indicator</li>
+    <li>Online Status</li>
+    <li>Read Status</li>
+    <li>Realtime Notification</li>
+  </ul>
+
+  <!-- 6 -->
+  </div></details>
+  <details class="section" id="s6"><summary><span class="n">6</span>WebSocket vs SSE</summary><div class="section-body">
+  <h3 class="sub">WebSocket — Two-way</h3>
+  <pre class="diagram">Client ⇄ Server</pre>
+  <p>เหมาะกับ Chat</p>
+  <h3 class="sub">SSE — Server → Client เป็นหลัก</h3>
+  <pre class="diagram">Server → Client</pre>
+  <p>เหมาะกับ</p>
+  <ul>
+    <li>Notification</li>
+    <li>Live Feed</li>
+    <li>Streaming Data</li>
+  </ul>
+  <blockquote class="quote"><p>ถ้า Chat ต้องการ Two-way Communication: WebSocket เหมาะกว่า SSE</p></blockquote>
+
+  <!-- 7 -->
+  </div></details>
+  <details class="section" id="s7"><summary><span class="n">7</span>WebSocket Connection</summary><div class="section-body">
+  <p>สมมติ:</p>
+  <pre class="diagram">User A → WS-1
+User B → WS-2
+User C → WS-3</pre>
+  <p>หลังจาก Connect แล้ว Connection จะค้างอยู่</p>
+  <pre class="diagram">A ═════════ WS-1
+B ═════════ WS-2
+C ═════════ WS-3</pre>
+  <p>A ไม่ได้วิ่งผ่าน Load Balancer ใหม่ทุกครั้งที่ส่ง Message ตอน Reconnect ใหม่ อาจได้ Server ตัวอื่น</p>
+  <pre class="diagram">ครั้งแรก
+
+B → WS-2
+
+Disconnect
+
+Reconnect
+
+B → WS-3</pre>
+  <p>ดังนั้นต้องมี Connection Mapping</p>
+
+  <!-- 8 -->
+  </div></details>
+  <details class="section" id="s8"><summary><span class="n">8</span>Connection Registry</summary><div class="section-body">
+  <p>เพราะ WS-1 ไม่มี Connection ของ B เราต้องรู้ว่า B อยู่ Server ไหน เช่น Redis:</p>
+  <pre class="diagram">Redis
+
+A → WS-1
+B → WS-2
+C → WS-3</pre>
+  <p>เมื่อ A ส่งหา B:</p>
+  <pre class="diagram">A
+ ↓
+WS-1
+ ↓
+Redis
+ ↓
+B → WS-2
+ ↓
+WS-2
+ ↓
+B</pre>
+  <p>Redis ในกรณีนี้ทำหน้าที่เป็น</p>
+  <blockquote class="quote"><p>Shared Connection Registry</p></blockquote>
+
+  <!-- 9 -->
+  </div></details>
+  <details class="section" id="s9"><summary><span class="n">9</span>Kafka</summary><div class="section-body">
+  <p>Kafka อย่าคิดว่าเป็น Database ให้คิดว่า:</p>
+  <blockquote class="quote"><p>"Event Streaming / Message Distribution System"</p></blockquote>
+  <p>Flow:</p>
+  <pre class="diagram">Producer
+    ↓
+Kafka
+    ↓
+Consumer</pre>
+
+  <!-- 10 -->
+  </div></details>
+  <details class="section" id="s10"><summary><span class="n">10</span>Kafka Producer</summary><div class="section-body">
+  <p>คนที่ส่ง Event เข้า Kafka เช่น API Server:</p>
+  <pre class="diagram">API Server
+    ↓
+Kafka</pre>
+  <p>Event:</p>
+  <pre class="diagram">{
+  "event": "MessageCreated",
+  "messageId": "123",
+  "roomId": "room-1",
+  "senderId": "A"
+}</pre>
+
+  <!-- 11 -->
+  </div></details>
+  <details class="section" id="s11"><summary><span class="n">11</span>Kafka Consumer</summary><div class="section-body">
+  <p>คนที่อ่าน Event จาก Kafka</p>
+  <pre class="diagram">Kafka
+  ↓
+Consumer</pre>
+  <p>Consumer สามารถเอา Event ไปทำงานต่อ เช่น</p>
+  <pre class="diagram">Kafka
+ │
+ ├── WebSocket Consumer
+ │
+ ├── Notification Consumer
+ │
+ └── Analytics Consumer</pre>
+
+  <!-- 12 -->
+  </div></details>
+  <details class="section" id="s12"><summary><span class="n">12</span>Consumer ไม่จำเป็นต้องเท่ากับ Service</summary><div class="section-body">
+  <p>สามารถเป็น Application เดียวกันได้:</p>
+  <pre class="diagram">WebSocket Service
+├── WebSocket Server
+└── Kafka Consumer</pre>
+  <p>หรือแยก Application:</p>
+  <pre class="diagram">WebSocket Service
+       +
+Message Consumer Service</pre>
+  <p>ขึ้นกับ Scale และ Architecture</p>
+
+  <!-- 13 -->
+  </div></details>
+  <details class="section" id="s13"><summary><span class="n">13</span>Kafka Topic</summary><div class="section-body">
+  <p>Topic = หมวดของ Event เช่น</p>
+  <pre class="diagram">chat-message
+notification
+payment
+analytics</pre>
+  <p>Chat:</p>
+  <pre class="diagram">chat-message topic</pre>
+
+  <!-- 14 -->
+  </div></details>
+  <details class="section" id="s14"><summary><span class="n">14</span>Kafka Partition</summary><div class="section-body">
+  <p>Partition เอาไว้ช่วย Scale</p>
+  <pre class="diagram">chat-message
+
+Partition 0
+[msg1]
+[msg2]
+
+Partition 1
+[msg3]
+[msg4]
+
+Partition 2
+[msg5]
+[msg6]</pre>
+  <p>สามารถ Process Parallel ได้</p>
+
+  <!-- 15 -->
+  </div></details>
+  <details class="section" id="s15"><summary><span class="n">15</span>Kafka Offset</summary><div class="section-body">
+  <p>Offset = ตำแหน่งของ Message</p>
+  <pre class="diagram">100 → Message A
+101 → Message B
+102 → Message C</pre>
+  <p>Consumer อ่านถึง 101 แล้ว Commit แปลว่า</p>
+  <blockquote class="quote"><p>"ผมประมวลผลถึง 101 แล้ว"</p></blockquote>
+  <p>ถ้า Consumer ล่มก่อน 102 เมื่อกลับมา สามารถอ่าน 102 ใหม่ได้</p>
+
+  <!-- 16 -->
+  </div></details>
+  <details class="section" id="s16"><summary><span class="n">16</span>Consumer Group</summary><div class="section-body">
+  <p>สำคัญมากสำหรับ Interview สมมติ:</p>
+  <pre class="diagram">Kafka
+  │
+  ├── Consumer 1
+  ├── Consumer 2
+  └── Consumer 3</pre>
+  <p>ถ้าอยู่ Consumer Group เดียวกัน Kafka สามารถแบ่ง Partition ให้ช่วยกัน Process เช่น</p>
+  <pre class="diagram">Partition 0 → Consumer 1
+Partition 1 → Consumer 2
+Partition 2 → Consumer 3</pre>
+  <p>แต่ถ้าเป็นคนละ Consumer Group:</p>
+  <pre class="diagram">Kafka
+ │
+ ├── WebSocket Group
+ │
+ ├── Notification Group
+ │
+ └── Analytics Group</pre>
+  <p>แต่ละ Group สามารถรับ Event เดียวกันไปประมวลผลได้</p>
+
+  <!-- 17 -->
+  </div></details>
+  <details class="section" id="s17"><summary><span class="n">17</span>Kafka ไม่ได้ทำให้ทุกอย่างเร็วขึ้น</summary><div class="section-body">
+  <p>Kafka ช่วย:</p>
+  <ul>
+    <li>Buffer Traffic</li>
+    <li>Decouple Services</li>
+    <li>Async Processing</li>
+    <li>Scale Consumers</li>
+    <li>Retry / Replay ผ่าน Offset</li>
+    <li>Event Streaming</li>
+  </ul>
+  <p>แต่ถ้า Consumer ทำงานหนัก:</p>
+  <pre class="diagram">Kafka
+ ↓
+WebSocket Consumer
+ ↓
+100,000 Users</pre>
+  <p>Consumer ก็ยังเป็น Bottleneck ได้ ดังนั้นต้อง Scale Consumer / Architecture ต่อ</p>
+
+  <!-- 18 -->
+  </div></details>
+  <details class="section" id="s18"><summary><span class="n">18</span>Chat Architecture พื้นฐาน</summary><div class="section-body">
+  <pre class="diagram">                   Load Balancer
+                         │
+              ┌──────────┼──────────┐
+              ▼          ▼          ▼
+            WS-1       WS-2       WS-3
+              │          │          │
+              A          B          C
+              │          │          │
+              └──────────┼──────────┘
+                         │
+                       Redis
+                  Connection Map
+                         │
+                         ▼
+                       Kafka
+                         │
+                         ▼
+                     Consumer
+                         │
+                         ▼
+                     Database</pre>
+  <p>แต่ในระบบจริง Database / Kafka ไม่จำเป็นต้องเป็นเส้นเดียวกันเสมอ</p>
+
+  <!-- 19 -->
+  </div></details>
+  <details class="section" id="s19"><summary><span class="n">19</span>A ส่ง Message ให้ B</summary><div class="section-body">
+  <p>สมมติ</p>
+  <pre class="diagram">A → WS-1
+B → WS-2</pre>
+  <p>A ส่ง:</p>
+  <pre class="diagram">Hello</pre>
+  <p>Flow:</p>
+  <pre class="diagram">A
+ ↓
+WS-1
+ ↓
+Backend
+ ├──→ Database
+ │
+ └──→ Kafka
+        ↓
+   Message Consumer
+        ↓
+      Redis
+        ↓
+   B → WS-2
+        ↓
+      WS-2
+        ↓
+        B</pre>
+
+  <!-- 20 -->
+  </div></details>
+  <details class="section" id="s20"><summary><span class="n">20</span>Kafka ไม่รู้ว่า B อยู่ WS-2</summary><div class="section-body">
+  <p>Kafka รู้แค่ว่า</p>
+  <pre class="diagram">MessageCreated
+room = room-1</pre>
+  <p>ส่วนระบบ WebSocket / Connection Registry เป็นคนรู้ว่า</p>
+  <pre class="diagram">B → WS-2</pre>
+  <p>ดังนั้น:</p>
+  <div class="qa-card"><p class="q">Kafka</p><p class="a">"มี Message ใหม่"</p></div>
+  <div class="qa-card"><p class="q">Redis</p><p class="a">"B อยู่ WS-2"</p></div>
+  <div class="qa-card"><p class="q">WS-2</p><p class="a">"งั้นฉันส่ง Message ให้ B"</p></div>
+
+  <!-- 21 -->
+  </div></details>
+  <details class="section" id="s21"><summary><span class="n">21</span>Fan-out</summary><div class="section-body">
+  <p>1 Message → หลาย User</p>
+  <pre class="diagram">             Message
+                │
+       ┌────────┼────────┐
+       ▼        ▼        ▼
+       B        C        D</pre>
+  <p>ถ้า Room มี 100,000 Users:</p>
+  <pre class="diagram">1 Message
+    ↓
+100,000 Deliveries</pre>
+  <p>นี่คือ Fan-out Problem — Kafka ไม่ได้แก้ Fan-out โดยตรง ต้องออกแบบ WebSocket / Sharding / Distribution เพิ่ม</p>
+
+  <!-- 22 -->
+  </div></details>
+  <details class="section" id="s22"><summary><span class="n">22</span>รองรับ 100,000 Concurrent Users</summary><div class="section-body">
+  <p>อย่าตอบทันทีว่า:</p>
+  <blockquote class="quote"><p>"ใช้ Microservice"</p></blockquote>
+  <p>ให้ถามก่อนว่า 100,000 คืออะไร</p>
+  <ul>
+    <li>Concurrent WebSocket Connections?</li>
+    <li>Requests/sec?</li>
+    <li>Messages/sec?</li>
+    <li>Users ทั้งหมด?</li>
+  </ul>
+  <p>ตัวอย่าง:</p>
+  <pre class="diagram">100,000 concurrent connections</pre>
+  <p>อาจต้อง:</p>
+  <pre class="diagram">Load Balancer
+      ↓
+WS-1
+WS-2
+WS-3
+...
+      ↓
+Redis
+      ↓
+Kafka</pre>
+  <p>Scale Horizontal</p>
+
+  <!-- 23 -->
+  </div></details>
+  <details class="section" id="s23"><summary><span class="n">23</span>Microservice</summary><div class="section-body">
+  <p>อย่าใช้เพราะ "ระบบใหญ่" เริ่มจาก:</p>
+  <pre class="diagram">Monolith
+    ↓
+Metrics
+    ↓
+หา Bottleneck
+    ↓
+แยก Service ที่มีปัญหา</pre>
+  <p>เช่น</p>
+  <pre class="diagram">Message Service
+Notification Service
+Media Service
+User Service</pre>
+  <div class="procon">
+    <div class="box pro">
+      <span class="label">ข้อดี</span>
+      <p>Independent Scaling · Decoupling · Independent Deployment</p>
+    </div>
+    <div class="box con">
+      <span class="label">ข้อเสีย</span>
+      <p>Infrastructure ซับซ้อน · Network Failure · Distributed Transaction · Observability · Deployment Complexity</p>
+    </div>
+  </div>
+
+  <!-- 24 -->
+  </div></details>
+  <details class="section" id="s24"><summary><span class="n">24</span>Database สำหรับ Chat</summary><div class="section-body">
+  <p>อย่ารีบพูดว่า:</p>
+  <blockquote class="quote"><p>"Message เยอะ → NoSQL"</p></blockquote>
+  <p>SQL สามารถรองรับข้อมูลจำนวนมากได้ถ้าออกแบบดี ควรคิดเรื่อง:</p>
+  <ul>
+    <li>Index</li>
+    <li>Pagination</li>
+    <li>Partitioning</li>
+    <li>Connection Pool</li>
+    <li>Query Optimization</li>
+  </ul>
+  <p>Query ที่พบบ่อย:</p>
+  <pre class="diagram">roomId + createdAt</pre>
+  <p>Index อาจออกแบบตาม Query Pattern</p>
+
+  <!-- 25 -->
+  </div></details>
+  <details class="section" id="s25"><summary><span class="n">25</span>SQL vs NoSQL</summary><div class="section-body">
+  <div class="procon">
+    <div class="box pro">
+      <span class="label">SQL</span>
+      <p>ACID · Transaction · Relation · Query Flexibility</p>
+    </div>
+    <div class="box pro">
+      <span class="label">NoSQL</span>
+      <p>Horizontal Scaling · Flexible Schema · High Throughput บาง Workload</p>
+    </div>
+  </div>
+  <p>เลือกตาม Access Pattern ไม่ใช่แค่จำนวน Record</p>
+
+  <!-- 26 -->
+  </div></details>
+  <details class="section" id="s26"><summary><span class="n">26</span>Redis</summary><div class="section-body">
+  <p>เหมาะกับข้อมูลที่ต้องการเร็วและไม่ควรไป Query DB ทุกครั้ง ตัวอย่าง:</p>
+  <ul>
+    <li>Cache</li>
+    <li>Session</li>
+    <li>Online Status</li>
+    <li>Connection Mapping</li>
+    <li>Rate Limit</li>
+    <li>Recent Messages</li>
+  </ul>
+  <p>ไม่ควรคิดว่า Redis = Database หลักโดยอัตโนมัติ สำหรับ Message:</p>
+  <pre class="diagram">Database = Source of Truth
+Redis = Cache / Temporary State</pre>
+
+  <!-- 27 -->
+  </div></details>
+  <details class="section" id="s27"><summary><span class="n">27</span>User Offline</summary><div class="section-body">
+  <p>ถ้า B Offline:</p>
+  <pre class="diagram">A
+ ↓
+API
+ ↓
+Database</pre>
+  <p>ไม่ต้องส่ง WebSocket ไป B เพราะ B ไม่มี WebSocket Connection เมื่อ B กลับมา:</p>
+  <pre class="diagram">B
+ ↓
+WebSocket Connect
+ ↓
+API / DB
+ ↓
+ดึง Unread Messages
+ ↓
+B</pre>
+  <p>Message ไม่หาย เพราะ DB เป็น Source of Truth</p>
+
+  <!-- 28 -->
+  </div></details>
+  <details class="section" id="s28"><summary><span class="n">28</span>Kafka จำเป็นไหมเมื่อ User Offline?</summary><div class="section-body">
+  <p>ไม่จำเป็นเสมอไป คำถามที่ถูกคือ:</p>
+  <blockquote class="quote"><p>"มี Event อื่นที่ต้อง Process ต่อไหม?"</p></blockquote>
+  <p>ถ้าไม่มี:</p>
+  <pre class="diagram">A
+ ↓
+DB
+ ↓
+Done</pre>
+  <p>ถ้ามี Notification:</p>
+  <pre class="diagram">A
+ ↓
+DB
+ ↓
+Kafka
+ ↓
+Notification Consumer
+ ↓
+Push Notification</pre>
+  <p>ดังนั้น: Online/Offline ไม่ใช่ตัวตัดสินว่าจะใช้ Kafka หรือไม่</p>
+
+  <!-- 29 -->
+  </div></details>
+  <details class="section" id="s29"><summary><span class="n">29</span>WebSocket Server vs WebSocket Message Consumer</summary><div class="section-body">
+  <h3 class="sub">WS Server — ดูแล Connection</h3>
+  <pre class="diagram">A ═════ WS-1
+B ═════ WS-2</pre>
+  <p>หน้าที่: Accept Connection · Receive Message · Send Message · Detect Disconnect · Heartbeat</p>
+  <h3 class="sub">WS Message Consumer — อ่าน Event จาก Kafka</h3>
+  <pre class="diagram">Kafka
+ ↓
+WS Message Consumer
+ ↓
+หา Destination
+ ↓
+ส่งต่อให้ WS Server</pre>
+  <p>สรุป: WS Server = คุยกับ Client · Consumer = อ่าน Event แล้วจัดการ Message</p>
+
+  <!-- 30 -->
+  </div></details>
+  <details class="section" id="s30"><summary><span class="n">30</span>Message Retry</summary><div class="section-body">
+  <p>ถ้า WebSocket Consumer Process Fail:</p>
+  <pre class="diagram">Kafka
+ ↓
+Consumer
+ ↓
+FAIL</pre>
+  <p>ถ้ายังไม่ Commit Offset</p>
+  <pre class="diagram">Consumer กลับมา
+ ↓
+อ่าน Event เดิม
+ ↓
+Retry</pre>
+  <p>Kafka ไม่ได้ "ทำ Retry Magic" เองทั้งหมด — Consumer / Retry Architecture ต้องออกแบบร่วมกัน</p>
+
+  <!-- 31 -->
+  </div></details>
+  <details class="section" id="s31"><summary><span class="n">31</span>Duplicate Message / Idempotency</summary><div class="section-body">
+  <p>ห้ามพึ่ง Frontend อย่างเดียว</p>
+  <pre class="diagram">Disable Button</pre>
+  <p>ช่วยลด Double Click แต่ Network Retry ก็ยังเกิดได้ ใช้:</p>
+  <pre class="diagram">clientMessageId = UUID</pre>
+  <p>Flow:</p>
+  <pre class="diagram">Client
+ ↓
+clientMessageId = abc123
+ ↓
+Backend
+ ↓
+Check</pre>
+  <p>ถ้ามีแล้ว:</p>
+  <pre class="diagram">Return Existing Message</pre>
+  <p>ถ้ายังไม่มี:</p>
+  <pre class="diagram">Create Message</pre>
+  <p>นี่เรียกว่า <strong>Idempotency</strong></p>
+
+  <!-- 32 -->
+  </div></details>
+  <details class="section" id="s32"><summary><span class="n">32</span>อย่าใช้ Timestamp + Message Text เป็น Duplicate Detection</summary><div class="section-body">
+  <p>ไม่ควร:</p>
+  <pre class="diagram">same message
++
+same timestamp
+=
+duplicate</pre>
+  <p>เพราะมีโอกาสผิดพลาด ใช้ Unique ID / Idempotency Key ดีกว่า</p>
+
+  <!-- 33 -->
+  </div></details>
+  <details class="section" id="s33"><summary><span class="n">33</span>Outbox Pattern</summary><div class="section-body">
+  <p>ปัญหา:</p>
+  <pre class="diagram">DB ✅
+Kafka ❌</pre>
+  <p>Message ถูก Save แล้ว แต่ Kafka ไม่ได้รับ Event เรียกว่า Dual Write Problem วิธีแก้ที่ดี:</p>
+  <pre class="diagram">Transaction
+
+DB
+├── messages
+└── outbox_events
+
+COMMIT</pre>
+  <p>แล้ว Worker:</p>
+  <pre class="diagram">Outbox
+ ↓
+Kafka</pre>
+  <p>ถ้า Kafka ล่ม:</p>
+  <pre class="diagram">DB ✅
+Outbox ✅
+Kafka ❌</pre>
+  <p>พอ Kafka กลับมา:</p>
+  <pre class="diagram">Outbox Worker
+ ↓
+Retry
+ ↓
+Kafka</pre>
+
+  <!-- 34 -->
+  </div></details>
+  <details class="section" id="s34"><summary><span class="n">34</span>DB Trigger vs API Publish Kafka</summary><div class="section-body">
+  <p>โดยทั่วไป:</p>
+  <pre class="diagram">API Server
+ ↓
+DB
+ ↓
+Kafka</pre>
+  <p>API / Backend Service เป็นคน Publish Event ไม่จำเป็นต้องให้ DB Trigger ยิง Kafka ข้อดีคือ Business Logic อยู่ใน Application Layer แต่ถ้าต้องการ Reliability สูง:</p>
+  <pre class="diagram">API
+ ↓
+DB Transaction
+ ├── Message
+ └── Outbox Event
+          ↓
+       Worker
+          ↓
+        Kafka</pre>
+
+  <!-- 35 -->
+  </div></details>
+  <details class="section" id="s35"><summary><span class="n">35</span>Encryption</summary><div class="section-body">
+  <p>ต้องแยก 3 เรื่อง:</p>
+  <h3 class="sub">Encryption in Transit</h3>
+  <p>เช่น HTTPS / TLS</p>
+  <pre class="diagram">Client ═════ TLS ═════ Server</pre>
+  <p>ป้องกันคนดัก Traffic ระหว่างทาง</p>
+  <h3 class="sub">Encryption at Rest</h3>
+  <p>ข้อมูลใน Database ถูกเข้ารหัส</p>
+  <pre class="diagram">Database
+"encrypted data"</pre>
+  <p>ป้องกันกรณีข้อมูล Storage ถูกเข้าถึงโดยไม่ได้รับอนุญาต</p>
+  <h3 class="sub">End-to-End Encryption</h3>
+  <pre class="diagram">A
+ ↓ Encrypt
+Server
+ ↓
+Kafka
+ ↓
+B
+ ↓ Decrypt</pre>
+  <p>Server ไม่ควรสามารถอ่าน Plaintext ได้</p>
+
+  <!-- 36 -->
+  </div></details>
+  <details class="section" id="s36"><summary><span class="n">36</span>AES — Symmetric Encryption</summary><div class="section-body">
+  <pre class="diagram">Same Key
+
+Encrypt
+Plaintext → Ciphertext
+
+Decrypt
+Ciphertext → Plaintext</pre>
+  <p>ข้อดี: เร็ว · เหมาะกับข้อมูลจำนวนมาก — ดังนั้นเหมาะกับการ Encrypt Message</p>
+
+  <!-- 37 -->
+  </div></details>
+  <details class="section" id="s37"><summary><span class="n">37</span>RSA — Asymmetric Encryption</summary><div class="section-body">
+  <p>มี:</p>
+  <pre class="diagram">Public Key
+Private Key</pre>
+  <p>Concept:</p>
+  <pre class="diagram">Public Key → Encrypt
+Private Key → Decrypt</pre>
+  <p>และ Digital Signature:</p>
+  <pre class="diagram">Private Key → Sign
+Public Key → Verify</pre>
+  <p>RSA ไม่เหมาะกับการ Encrypt Message จำนวนมากโดยตรงเท่า AES</p>
+
+  <!-- 38 -->
+  </div></details>
+  <details class="section" id="s38"><summary><span class="n">38</span>Hybrid Encryption</summary><div class="section-body">
+  <p>แนวคิดที่เราเสนอ:</p>
+  <pre class="diagram">Message
+   ↓
+AES
+   ↓
+Ciphertext
+
+AES Key
+   ↓
+RSA Public Key ของ B
+   ↓
+Encrypted AES Key</pre>
+  <p>ส่ง:</p>
+  <pre class="diagram">Ciphertext
++
+Encrypted AES Key</pre>
+  <p>B:</p>
+  <pre class="diagram">RSA Private Key
+      ↓
+AES Key
+      ↓
+AES Decrypt
+      ↓
+Message</pre>
+  <p>แนวคิดคือ: AES ใช้ Encrypt Data · RSA/Asymmetric Crypto ใช้จัดการ Key</p>
+
+  <!-- 39 -->
+  </div></details>
+  <details class="section" id="s39"><summary><span class="n">39</span>อย่า Implement Cryptography เอง</summary><div class="section-body">
+  <p>ถ้าถูกถาม:</p>
+  <blockquote class="quote"><p>"จะ Implement AES/RSA เองไหม?"</p></blockquote>
+  <p>ตอบ:</p>
+  <blockquote class="quote"><p>"ผมจะใช้มาตรฐานและ Library ที่ได้รับการตรวจสอบแล้วครับ เพราะ Cryptography มีรายละเอียดด้าน Key Management, Mode, Nonce, IV และ Authentication ที่ผิดพลาดได้ง่าย"</p></blockquote>
+
+  <!-- 40 -->
+  </div></details>
+  <details class="section" id="s40"><summary><span class="n">40</span>Security ที่ควรรู้เพิ่ม</summary><div class="section-body">
+  <p>สำหรับ Chat ควรรู้ Concept:</p>
+  <ul>
+    <li>TLS</li>
+    <li>Authentication</li>
+    <li>Authorization</li>
+    <li>Encryption at Rest</li>
+    <li>Encryption in Transit</li>
+    <li>E2EE</li>
+    <li>Key Management</li>
+    <li>Secret Management</li>
+    <li>Rate Limiting</li>
+    <li>Input Validation</li>
+    <li>Audit Log</li>
+  </ul>
+
+  <!-- 41 -->
+  </div></details>
+  <details class="section" id="s41"><summary><span class="n">41</span>Typing Indicator</summary><div class="section-body">
+  <p>ไม่จำเป็นต้อง Save DB ทุกครั้ง</p>
+  <pre class="diagram">A กำลังพิมพ์
+ ↓
+WebSocket
+ ↓
+B</pre>
+  <p>เป็น Temporary Event เหมาะกับ WebSocket</p>
+
+  <!-- 42 -->
+  </div></details>
+  <details class="section" id="s42"><summary><span class="n">42</span>Online / Offline Status</summary><div class="section-body">
+  <p>ใช้ Connection State / Heartbeat</p>
+  <pre class="diagram">Connect
+ ↓
+Online
+
+Disconnect
+ ↓
+Offline</pre>
+  <p>แต่ต้องระวัง Network ไม่ได้ Disconnect อย่าง clean เสมอ จึงมักมี:</p>
+  <pre class="diagram">Heartbeat
+Ping
+Pong
+Timeout</pre>
+
+  <!-- 43 -->
+  </div></details>
+  <details class="section" id="s43"><summary><span class="n">43</span>Read / Delivered Status</summary><div class="section-body">
+  <p>อาจมี State:</p>
+  <pre class="diagram">SENT
+ ↓
+DELIVERED
+ ↓
+READ</pre>
+  <p>เช่น:</p>
+  <pre class="diagram">SENT
+= Server รับแล้ว
+
+DELIVERED
+= Client B ได้รับแล้ว
+
+READ
+= B เปิดอ่านข้อความแล้ว</pre>
+
+  <!-- 44 -->
+  </div></details>
+  <details class="section" id="s44"><summary><span class="n">44</span>Message Ordering</summary><div class="section-body">
+  <p>ถ้ามี:</p>
+  <pre class="diagram">A
+B
+C</pre>
+  <p>ต้องคิดว่า Message จะมาถึง Client ตามลำดับหรือไม่ Distributed System อาจเกิด:</p>
+  <pre class="diagram">A
+C
+B</pre>
+  <p>Kafka Partition สามารถช่วยรักษา Ordering ภายใน Partition ได้ แต่ต้องออกแบบ Partition Key ให้เหมาะสม เช่น:</p>
+  <pre class="diagram">roomId</pre>
+
+  <!-- 45 -->
+  </div></details>
+  <details class="section" id="s45"><summary><span class="n">45</span>Failure Scenario ที่ต้องเตรียม</summary><div class="section-body">
+  <p>กรรมการชอบถาม:</p>
+  <div class="qa-card"><p class="q">DB สำเร็จ แต่ Kafka Fail?</p><p class="a">Outbox Pattern</p></div>
+  <div class="qa-card"><p class="q">Kafka สำเร็จ แต่ Consumer Fail?</p><p class="a">ยังไม่ Commit Offset → Retry</p></div>
+  <div class="qa-card"><p class="q">Message ถูกส่งซ้ำ?</p><p class="a">Idempotency Key / clientMessageId</p></div>
+  <div class="qa-card"><p class="q">WebSocket Server ตาย?</p><p class="a">Client Reconnect + Message Recovery จาก DB</p></div>
+  <div class="qa-card"><p class="q">Redis ตาย?</p><p class="a">ต้องคิดว่า Redis เป็น Cache/Registry หรือ Source of Truth — ถ้าเป็น Registry ต้องมี Reconnect / Re-register และอาจต้องมี fallback strategy</p></div>
+  <div class="qa-card"><p class="q">User Offline?</p><p class="a">Persist DB แล้วรอ User กลับมา</p></div>
+  <div class="qa-card"><p class="q">User Reconnect คนละ WS?</p><p class="a">Connection Registry Update</p></div>
+  <div class="qa-card"><p class="q">Message มาถึงไม่เรียง?</p><p class="a">Message ID / Sequence Number / Kafka Partition / Client Ordering Strategy</p></div>
+
+  <!-- 46 -->
+  </div></details>
+  <details class="section" id="s46"><summary><span class="n">46</span>100,000 Users</summary><div class="section-body">
+  <p>ต้องถามก่อนว่า:</p>
+  <pre class="diagram">100K concurrent connections?
+100K requests/sec?
+10K messages/sec?</pre>
+  <p>เพราะ Scale คนละแบบ ถ้า 100K WebSocket Connections:</p>
+  <pre class="diagram">Load Balancer
+       ↓
+WS-1
+WS-2
+WS-3
+...
+       ↓
+Redis
+       ↓
+Kafka
+       ↓
+Consumers
+       ↓
+DB</pre>
+  <p>ต้อง Monitor:</p>
+  <ul>
+    <li>Connection Count</li>
+    <li>CPU</li>
+    <li>Memory</li>
+    <li>Network</li>
+    <li>Message Latency</li>
+    <li>Kafka Consumer Lag</li>
+    <li>DB Throughput</li>
+    <li>Error Rate</li>
+  </ul>
+
+  <!-- 47 -->
+  </div></details>
+  <details class="section" id="s47"><summary><span class="n">47</span>Microservice Decision</summary><div class="section-body">
+  <div class="procon">
+    <div class="box con">
+      <span class="label">อย่าพูด</span>
+      <p>"100K → Microservice"</p>
+    </div>
+    <div class="box pro">
+      <span class="label">พูด</span>
+      <p>"ผมจะดู Bottleneck จาก Metrics ก่อน แล้วค่อยแยก Service ที่ต้องการ Independent Scaling"</p>
+    </div>
+  </div>
+  <p>เช่น:</p>
+  <pre class="diagram">Monolith
+ ↓
+Message Traffic สูง
+ ↓
+Message Service แยก</pre>
+
+  <!-- 48 -->
+  </div></details>
+  <details class="section" id="s48"><summary><span class="n">48</span>Architecture Decision Framework</summary><div class="section-body">
+  <p>เวลาต้องเลือก Technology:</p>
+  <pre class="diagram">Requirement
+     ↓
+Traffic
+     ↓
+Latency
+     ↓
+Consistency
+     ↓
+Availability
+     ↓
+Team Skill
+     ↓
+Cost
+     ↓
+Complexity
+     ↓
+Decision</pre>
+  <blockquote class="quote"><p>"ผมเลือก Go ไม่ใช่เพราะ Go ดีกว่า NestJS แต่เพราะ Requirement มี Concurrent Connection สูง และทีมมีความพร้อมด้าน Go"</p></blockquote>
+
+  <!-- 49 -->
+  </div></details>
+  <details class="section" id="s49"><summary><span class="n">49</span>คำถาม Interview ที่ควรซ้อม</summary><div class="section-body">
+  <h3 class="sub">Frontend</h3>
+  <ol>
+    <li>React vs Next.js?</li>
+    <li>SSR vs CSR?</li>
+    <li>State Management เลือกยังไง?</li>
+    <li>Performance ทำยังไง?</li>
+    <li>React Rendering ทำงานอย่างไร?</li>
+    <li>useMemo/useCallback ใช้เมื่อไร?</li>
+    <li>Error Boundary?</li>
+    <li>Code Splitting?</li>
+    <li>Authentication ใน Frontend?</li>
+    <li>WebSocket Lifecycle?</li>
+  </ol>
+  <h3 class="sub">Backend</h3>
+  <ol>
+    <li>REST API Design?</li>
+    <li>Authentication vs Authorization?</li>
+    <li>Stateless vs Stateful?</li>
+    <li>Middleware?</li>
+    <li>Rate Limiting?</li>
+    <li>Caching?</li>
+    <li>Connection Pool?</li>
+    <li>Transaction?</li>
+    <li>Idempotency?</li>
+    <li>Retry?</li>
+  </ol>
+  <h3 class="sub">Database</h3>
+  <ol>
+    <li>SQL vs NoSQL?</li>
+    <li>Index ทำงานอย่างไร?</li>
+    <li>Composite Index?</li>
+    <li>Pagination แบบ Offset vs Cursor?</li>
+    <li>Transaction?</li>
+    <li>Isolation Level?</li>
+    <li>Deadlock?</li>
+    <li>Replication?</li>
+    <li>Partitioning?</li>
+    <li>Query Optimization?</li>
+  </ol>
+  <h3 class="sub">Distributed System</h3>
+  <ol>
+    <li>Kafka คืออะไร?</li>
+    <li>Topic?</li>
+    <li>Partition?</li>
+    <li>Offset?</li>
+    <li>Consumer Group?</li>
+    <li>Retry?</li>
+    <li>Dead Letter Queue?</li>
+    <li>Idempotency?</li>
+    <li>Eventual Consistency?</li>
+    <li>CAP?</li>
+    <li>Message Ordering?</li>
+    <li>Duplicate Event?</li>
+    <li>Outbox Pattern?</li>
+    <li>Distributed Transaction?</li>
+    <li>Failure Recovery?</li>
+  </ol>
+
+  <!-- 50 -->
+  </div></details>
+  <details class="section" id="s50"><summary><span class="n">50</span>คำถามที่ควรถามบริษัทตอนจบ</summary><div class="section-body">
+  <div class="qa-card">
+    <p class="q">คำถาม 1 — Expectation</p>
+    <p class="a">"ถ้าผมได้รับเลือกเข้ามาทำงาน อยากทราบว่าทางทีมคาดหวังอะไรจาก Senior ในช่วง 3–6 เดือนแรกบ้างครับ?"</p>
+  </div>
+  <div class="qa-card">
+    <p class="q">คำถาม 2 — Ownership</p>
+    <p class="a">"สำหรับ Senior Fullstack ทางทีมคาดหวังให้มีส่วนร่วมตั้งแต่ Requirement และ Technical Design ไปจนถึง Architecture Decision มากน้อยแค่ไหนครับ?"</p>
+  </div>
+  <div class="qa-card">
+    <p class="q">คำถาม 3 — Technical Architecture</p>
+    <p class="a">"จากโจทย์ Chat ที่ได้รับ ผมลองศึกษาและออกแบบ Architecture เพิ่มเติม เลยอยากทราบว่า ถ้าเป็นข้อมูลที่สามารถเปิดเผยได้ Message ของระบบมีการ Persist ไว้หรือไม่ครับ และมี Requirement ด้าน Encryption หรือ Data Security ในระดับไหนบ้างครับ?"</p>
+  </div>
+  <div class="qa-card">
+    <p class="q">คำถาม 4 — Technical Decision</p>
+    <p class="a">"เวลาทีมมี Technical Decision ที่มีหลายทางเลือก ปกติทีมใช้ Criteria อะไรในการตัดสินใจครับ เช่น Performance, Maintainability, Cost หรือ Time to Market?"</p>
+  </div>
+
+  <!-- 51 -->
+  </div></details>
+  <details class="section" id="s51"><summary><span class="n">51</span>วิธีตอบ System Design ให้ดู Senior</summary><div class="section-body">
+  <p>ใช้ Framework นี้:</p>
+  <pre class="diagram"> 1. Clarify Requirement
+ 2. Estimate Scale
+ 3. Define API / Data Flow
+ 4. Design High-Level Architecture
+ 5. Database
+ 6. Cache
+ 7. Async Processing
+ 8. Realtime
+ 9. Failure Handling
+10. Security
+11. Monitoring
+12. Trade-off</pre>
+
+  <!-- 52 -->
+  </div></details>
+  <details class="section" id="s52"><summary><span class="n">52</span>ตัวอย่างคำตอบ Senior</summary><div class="section-body">
+  <p>คำถาม:</p>
+  <blockquote class="quote"><p>"ออกแบบ Chat ที่รองรับ 100,000 concurrent users"</p></blockquote>
+  <p>ตอบ:</p>
+  <blockquote class="script">
+    <p>"ก่อนอื่นผมขอ Clarify ก่อนครับว่า 100,000 หมายถึง Concurrent WebSocket Connections หรือ Request per Second และมีประมาณกี่ Message ต่อวินาที เพราะ Architecture จะต่างกันครับ</p>
+    <p>ถ้าเป็น 100,000 Concurrent WebSocket Connections ผมจะใช้ Load Balancer กระจาย Connection ไปยัง WebSocket Server หลาย Instance โดยให้แต่ละ Instance เป็น Stateless ในส่วนของ Application State และเก็บ Connection Mapping ไว้ใน Shared Store เช่น Redis</p>
+    <p>Message ที่ส่งเข้ามาจะ Persist ลง Database เพื่อให้ Database เป็น Source of Truth จากนั้นผมจะพิจารณา Publish Event เข้า Kafka เพื่อ Decouple Message Processing และรองรับ Consumer หลายประเภท เช่น WebSocket Delivery, Notification และ Analytics</p>
+    <p>สำหรับ Reliability ผมจะระวัง Dual Write ระหว่าง Database กับ Kafka และพิจารณาใช้ Outbox Pattern</p>
+    <p>ส่วน Database จะออกแบบ Index ตาม Query Pattern เช่น roomId และ createdAt และพิจารณา Partitioning เมื่อข้อมูลมีขนาดใหญ่ขึ้น</p>
+    <p>หลังจากนั้นผมจะ Monitor WebSocket Connections, Message Latency, Kafka Consumer Lag, Database Throughput และ Error Rate เพื่อหา Bottleneck ก่อน Scale เพิ่มครับ"</p>
+  </blockquote>
+
+  <!-- 53 -->
+  </div></details>
+  <details class="section" id="s53"><summary><span class="n">53</span>สิ่งที่ "ไม่ควร" ตอบ</summary><div class="section-body">
+  <div class="procon">
+    <div class="box con"><span class="label">❌</span><p>"100K users ต้องใช้ Microservice"</p></div>
+    <div class="box pro"><span class="label">ดีกว่า</span><p>"ผมจะดู Bottleneck ก่อน แล้วค่อยแยก Service ที่ต้องการ Independent Scaling"</p></div>
+  </div>
+  <div class="procon">
+    <div class="box con"><span class="label">❌</span><p>"Message เยอะต้องใช้ NoSQL"</p></div>
+    <div class="box pro"><span class="label">ดีกว่า</span><p>"ผมจะดู Access Pattern และ Query Requirement ก่อน แล้วพิจารณา SQL + Index/Partitioning ก่อน"</p></div>
+  </div>
+  <div class="procon">
+    <div class="box con"><span class="label">❌</span><p>"Kafka ทำให้ระบบเร็วขึ้น"</p></div>
+    <div class="box pro"><span class="label">ดีกว่า</span><p>"Kafka ช่วย Buffer และ Decouple ทำให้ Scale Consumer ได้ แต่ไม่ได้ทำให้ Processing ของ Consumer เร็วขึ้นโดยตรง"</p></div>
+  </div>
+  <div class="procon">
+    <div class="box con"><span class="label">❌</span><p>"Redis ใช้เก็บ Message"</p></div>
+    <div class="box pro"><span class="label">ดีกว่า</span><p>"Database เป็น Source of Truth ส่วน Redis ใช้ Cache หรือ Temporary State ตาม Requirement"</p></div>
+  </div>
+  <div class="procon">
+    <div class="box con"><span class="label">❌</span><p>"Go เร็วกว่า NestJS"</p></div>
+    <div class="box pro"><span class="label">ดีกว่า</span><p>"Go อาจเหมาะกับ High Concurrency Workload แต่ต้องดู Requirement และ Team Capability ประกอบ"</p></div>
+  </div>
+
+  <!-- 54 -->
+  </div></details>
+  <details class="section" id="s54"><summary><span class="n">54</span>Core Concept ที่ควรจำให้ได้ก่อนเข้าสัมภาษณ์</summary><div class="section-body">
+  <p>ถ้ามีเวลาน้อย ให้จำ 15 เรื่องนี้ก่อน:</p>
+  <pre class="diagram"> 1. HTTP vs WebSocket
+ 2. Load Balancer
+ 3. Stateless / Stateful
+ 4. API Server vs Service
+ 5. Redis
+ 6. SQL / NoSQL
+ 7. Index / Pagination
+ 8. Kafka Producer
+ 9. Kafka Topic
+10. Kafka Partition
+11. Consumer Group
+12. Offset / Commit
+13. Idempotency
+14. Outbox Pattern
+15. Encryption</pre>
+  <p>และสำหรับโจทย์ Chat ให้จำ Flow หลัก:</p>
+  <pre class="diagram">Client
+  ↓
+Load Balancer
+  ↓
+API / WebSocket Server
+  ↓
+Database
+  ↓
+Outbox
+  ↓
+Kafka
+  ↓
+Consumer
+  ↓
+Connection Registry
+  ↓
+WebSocket Server
+  ↓
+Client</pre>
+
+  <!-- 55 -->
+  </div></details>
+  <details class="section" id="s55"><summary><span class="n">55</span>สิ่งที่ Interviewer กำลังวัดจริง ๆ</summary><div class="section-body">
+  <p>สุดท้ายอย่าพยายามทำให้ตัวเองดูเหมือนรู้ทุก Technology สิ่งที่เขาต้องการเห็นจาก Senior คือ:</p>
+  <pre class="diagram">เข้าใจ Requirement
+       ↓
+คิดถึง Scale
+       ↓
+มองเห็น Bottleneck
+       ↓
+คิดถึง Failure
+       ↓
+เลือก Technology
+       ↓
+อธิบาย Trade-off
+       ↓
+รับผิดชอบ Decision</pre>
+  <p>ถ้าไม่รู้บาง Technology <strong>ไม่เป็นไร</strong> สามารถพูด:</p>
+  <blockquote class="quote"><p>"ตรงนี้ผมยังไม่ได้มี Production Experience โดยตรง แต่จาก Concept ที่ผมเข้าใจ ผมจะออกแบบประมาณนี้ครับ..."</p></blockquote>
+  <p>ดีกว่าพยายามตอบให้ดูเหมือนรู้แล้วโดนถาม Deep Dive ต่อจนหลุด</p>
+
+  <!-- CHECKLIST -->
+  </div></details>
+  <details class="section" id="checklist"><summary><span class="n">✓</span>Final Checklist ก่อนเข้าสัมภาษณ์</summary><div class="section-body">
+
+  <h3 class="sub">ต้องอธิบายได้โดยไม่เปิด Google</h3>
+  <ul class="checklist">
+    <li>WebSocket คืออะไร</li>
+    <li>WebSocket Connection ทำงานอย่างไร</li>
+    <li>Load Balancer ทำอะไร</li>
+    <li>API Server คืออะไร</li>
+    <li>Service คืออะไร</li>
+    <li>Redis ใช้ทำอะไร</li>
+    <li>Kafka คืออะไร</li>
+    <li>Producer / Consumer</li>
+    <li>Topic</li>
+    <li>Partition</li>
+    <li>Consumer Group</li>
+    <li>Offset</li>
+    <li>Retry</li>
+    <li>Idempotency</li>
+    <li>Outbox Pattern</li>
+    <li>SQL vs NoSQL</li>
+    <li>Index</li>
+    <li>Pagination</li>
+    <li>Horizontal Scaling</li>
+    <li>Fan-out</li>
+    <li>Online / Offline</li>
+    <li>Message Ordering</li>
+    <li>AES</li>
+    <li>RSA</li>
+    <li>TLS</li>
+    <li>Encryption at Rest</li>
+    <li>E2EE</li>
+  </ul>
+
+  <h3 class="sub">ต้องตอบแบบมีเหตุผลได้</h3>
+  <ul class="checklist">
+    <li>ทำไม React / Next.js</li>
+    <li>ทำไม Go / NestJS</li>
+    <li>ทำไม WebSocket / SSE</li>
+    <li>ทำไม SQL / NoSQL</li>
+    <li>ทำไม Redis</li>
+    <li>ทำไม Kafka</li>
+    <li>ทำไม Microservice</li>
+    <li>จะรองรับ 100K Users อย่างไร</li>
+    <li>WebSocket Server ล่มทำอย่างไร</li>
+    <li>Kafka ล่มทำอย่างไร</li>
+    <li>DB สำเร็จแต่ Kafka Fail ทำอย่างไร</li>
+    <li>Duplicate Message ทำอย่างไร</li>
+    <li>User Offline ทำอย่างไร</li>
+    <li>Message Ordering ทำอย่างไร</li>
+    <li>Security ของ Message ทำอย่างไร</li>
+  </ul>
+
+  <div class="final-quote">
+    <p>และที่สำคัญที่สุด อย่าตอบว่า:</p>
+    <p class="bad">"ใช้ X เพราะ X ดี"</p>
+    <p>ให้ตอบว่า:</p>
+    <p class="good">"จาก Requirement X ผมเลือก Y เพราะ... แต่ Trade-off คือ... ถ้า Requirement เปลี่ยน ผมอาจเลือก Z แทน"</p>
+    <p style="margin-top:14px;">นี่คือวิธีคิดที่ทำให้คำตอบจาก <strong>Mid-level ขยับไป Senior</strong> ได้ชัดที่สุด</p>
+  </div>
+
+  </div></details>
+  <p class="foot">
+    baloz · senior fullstack interview cheat sheet — เนื้อหามาจากที่ Boss เตรียมไว้ทั้งหมด แปลงเป็น HTML สำหรับอ่าน/ทบทวนสะดวกขึ้นเท่านั้น ไม่ได้แก้เนื้อหาใดๆ
+  </p>
+
+</div>
