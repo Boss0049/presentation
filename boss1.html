@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>Interview Prep — Senior Full-Stack (Next.js / LINE OA / Postgres / Docker / Node)</title>
+  <style>
+    body { font-family: -apple-system, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 20px; color: #1a1a1a; }
+    h1 { border-bottom: 2px solid #333; padding-bottom: 8px; }
+    h2 { margin-top: 40px; color: #2c5282; }
+    h3 { margin-top: 24px; color: #2b6cb0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; }
+    th { background: #2c5282; color: white; text-align: left; padding: 8px 12px; }
+    td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    tr:hover td { background: #f7fafc; }
+    code { background: #edf2f7; padding: 2px 6px; border-radius: 3px; font-size: 0.9em; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 0.8em; font-weight: bold; }
+    .high { background: #fed7d7; color: #822727; }
+    .mid { background: #fefcbf; color: #744210; }
+    .must { background: #c6f6d5; color: #276749; }
+    .note { background: #fffbeb; border-left: 4px solid #f6ad55; padding: 12px 16px; margin: 16px 0; }
+    .warn { background: #fff5f5; border-left: 4px solid #fc8181; padding: 12px 16px; margin: 16px 0; }
+    pre { background: #2d3748; color: #e2e8f0; padding: 16px; border-radius: 6px; overflow-x: auto; font-size: 0.85em; line-height: 1.6; }
+    ul { line-height: 1.7; }
+    li { margin-bottom: 4px; }
+    details { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin: 10px 0; }
+    summary { cursor: pointer; font-weight: bold; color: #2c5282; }
+  </style>
+</head>
+<body>
+
+<h1>Interview Prep — Senior Full-Stack Developer</h1>
+<p>Stack: Next.js · LINE OA (Chatbot) · PostgreSQL · Docker · Node.js</p>
+<p><small>สร้าง: 2026-08-06</small></p>
+
+<div class="note">
+  <strong>เป้าหมายไฟล์นี้:</strong> รวมคำถามสัมภาษณ์ตาม stack เป้าหมาย + บทเรียนจากบทสนทนาเรื่อง SQL vs NoSQL + checklist เตรียมตัวจุดที่ไม่ถนัด (SQL, Docker, K8s)
+</div>
+
+<!-- ===================== SECTION 1 ===================== -->
+<h2>1. คำถามสัมภาษณ์ตาม Stack</h2>
+
+<h3>Next.js</h3>
+<ul>
+  <li>SSR vs SSG vs ISR เลือกใช้ยังไงกับหน้าที่ต้องแสดงประวัติแชท/ข้อความ realtime</li>
+  <li>API Routes ของ Next.js ใช้เป็น backend หลักไหม หรือแยก Node server ต่างหาก แล้วทำไมเลือกแบบนั้น</li>
+  <li>จัดการ session/auth ยังไงถ้า user ล็อกอินผ่าน LINE Login แล้วต้องผูกกับระบบของเราเอง</li>
+</ul>
+
+<h3>LINE OA / Chatbot Integration</h3>
+<ul>
+  <li>Webhook จาก LINE Messaging API เข้ามา — validate signature (<code>x-line-signature</code>) ยังไง ป้องกัน spoofed request ยังไง</li>
+  <li>LINE webhook ต้องตอบ 200 ภายในเวลาสั้นๆ ไม่งั้น retry — design ยังไงให้ processing หนักๆ ไม่บล็อก response</li>
+  <li>reply token มีอายุจำกัดและใช้ได้ครั้งเดียว — ถ้ามี event ซ้ำ (LINE retry) deduplicate ยังไง</li>
+  <li>Rich menu / Flex message ออกแบบยังไงให้ maintain ง่าย</li>
+  <li>LINE userId ผูกกับ user ในระบบเรายังไง ถ้า user บล็อก/ปลดบล็อก OA ต้องจัดการ state ยังไง</li>
+</ul>
+
+<h3>Node.js Backend</h3>
+<ul>
+  <li>Event-driven กับ webhook handler — ใช้ queue (BullMQ/RabbitMQ) หรือ fire-and-forget แบบไหน trade-off คืออะไร</li>
+  <li>ถ้า call LINE API แล้ว rate limit (429) จะ retry/backoff ยังไง</li>
+  <li>เขียน middleware verify webhook signature แบบ reusable ยังไง</li>
+</ul>
+
+<h3>PostgreSQL</h3>
+<ul>
+  <li>schema design สำหรับ chat history — เก็บ message log แบบไหนไม่ให้ table โตจนช้า</li>
+  <li>index strategy สำหรับ query "ดึงข้อความล่าสุดของ user คนนี้" ให้เร็ว</li>
+  <li>เคยเจอ N+1 query ตอนโหลด conversation + user profile ไหม แก้ยังไง</li>
+</ul>
+
+<h3>Docker / DevOps</h3>
+<ul>
+  <li>Dockerize Next.js app ยังไงให้ image เล็ก (multi-stage build)</li>
+  <li>local dev ต้อง expose webhook ให้ LINE เรียกได้ (ngrok) — จัดการ workflow dev ↔ LINE sandbox ยังไง</li>
+  <li>docker-compose ผูก Next.js + Node worker + Postgres เข้าด้วยกันยังไง ถ้า scale ต้องแยก service ไหน</li>
+</ul>
+
+<h3>System Design (โจทย์รวม)</h3>
+<div class="note">
+  "ออกแบบระบบที่ user คุยกับ LINE OA แล้ว AI ตอบกลับ พร้อมเก็บ history และมี dashboard ให้ admin ดู conversation" — วาด flow ตั้งแต่ webhook เข้า → queue → AI process → reply → บันทึก DB → sync ไป dashboard
+</div>
+
+<!-- ===================== SECTION 2 ===================== -->
+<h2>2. Deep Dive: คำตอบที่ควรตอบได้ (ข้อ 1-4)</h2>
+
+<details>
+<summary>Next.js — คำตอบละเอียด</summary>
+<p><strong>SSR vs SSG vs ISR:</strong> Chat history เป็นข้อมูล per-user เปลี่ยนตลอด → ไม่เหมาะ SSG/ISR (cache ผูกกับ user เดียวไม่ได้) ใช้ SSR สำหรับ initial load + client-side fetching (SWR/TanStack Query) สำหรับ pagination/realtime</p>
+<p><strong>API Routes เป็น backend หลักไหม:</strong> ขึ้นกับ scale — webhook ที่ต้อง process หนัก + queue ควรแยก Node server เพราะ API Routes รันบน serverless มี timeout จำกัด ไม่เหมาะ long-running worker Pattern ที่ดี: Next.js API Route รับ webhook แล้วโยนเข้า queue ทันที (ACK เร็ว) ส่วน worker แยก service ต่างหาก</p>
+<p><strong>Auth กับ LINE Login:</strong> LINE Login (OAuth) → verify <code>id_token</code> → ได้ LINE userId → map เข้า internal user table Session ฝั่งเราใช้ NextAuth/JWT แยกจาก LINE token (อายุสั้น ใช้แค่ตอน login)</p>
+</details>
+
+<details>
+<summary>LINE OA / Chatbot — คำตอบละเอียด</summary>
+<p><strong>Validate signature:</strong> HMAC-SHA256 ของ raw body ด้วย Channel Secret ต้อง verify ด้วย raw body ก่อน parse JSON (ถ้า framework parse ก่อนแล้ว hash จะไม่ตรง — pitfall จริงที่พลาดบ่อย)</p>
+<p><strong>Reply เร็ว + processing หนัก:</strong> webhook handler validate + push เข้า queue + ตอบ 200 ทันที Worker แยก process แล้วเรียก LINE Reply/Push API แบบ async</p>
+<p><strong>Reply token ใช้ครั้งเดียว + event ซ้ำ:</strong> deduplicate ด้วย <code>webhookEventId</code> เก็บ Redis/DB TTL สั้น ถ้าเคยเห็นแล้ว skip</p>
+<p><strong>Rich menu/Flex message:</strong> แยกเป็น template builder function ต่อ message type ไม่ hardcode JSON กระจาย</p>
+<p><strong>LINE userId ผูก + สถานะบล็อก:</strong> mapping table แยกจาก user table หลัก handle event <code>follow</code>/<code>unfollow</code> เพื่อไม่ยิง Push API ไปหา user ที่บล็อกแล้ว</p>
+</details>
+
+<details>
+<summary>Node.js Backend — คำตอบละเอียด</summary>
+<p><strong>Queue vs fire-and-forget:</strong> Fire-and-forget เสี่ยงข้อมูลหายถ้า process crash Queue (BullMQ/Redis) ให้ retry + persistence + concurrency control คุ้มกว่าสำหรับ chat log ที่ห้ามข้อมูลหาย</p>
+<p><strong>Rate limit 429:</strong> exponential backoff with jitter ไม่ retry ทันที (จะโดน rate limit ซ้ำเป็น loop)</p>
+<p><strong>Middleware reusable:</strong> แยก <code>verifyLineSignature</code> middleware ออกจาก business logic เพื่อเทสได้อิสระและ reuse ได้หลาย endpoint</p>
+</details>
+
+<details>
+<summary>PostgreSQL — คำตอบละเอียด</summary>
+<p><strong>Schema ไม่ให้โตช้า:</strong> Partition ตาม <code>created_at</code> (native Postgres partitioning) query ข้อความล่าสุดกระทบ partition เดียว แยก hot data (messages) จาก cold data (attachments/metadata)</p>
+<p><strong>Index strategy:</strong> Composite index <code>(line_user_id, created_at DESC)</code> ใช้ keyset pagination แทน OFFSET ตอนข้อมูลเยอะ</p>
+<p><strong>N+1 query:</strong> แก้ด้วย JOIN ครั้งเดียว หรือ batch fetch (<code>WHERE id IN (...)</code>) ระวัง ORM (Prisma) <code>include</code> ที่ทำให้เกิด N+1 ใน loop โดยไม่ตั้งใจ — เช็ค generated SQL จริงเสมอ</p>
+</details>
+
+<!-- ===================== SECTION 3 ===================== -->
+<h2>3. SQL vs NoSQL สำหรับ Chat Message — บทเรียนสำคัญ</h2>
+
+<div class="warn">
+  <strong>Assumption ที่มักผิด (และมักถูกถามแบบฝัง assumption นี้ไว้ในคำถาม):</strong>
+  <ol>
+    <li>"Message หลายรูปแบบ → ต้อง NoSQL"</li>
+    <li>"ข้อมูลเยอะขึ้น SQL query ช้ากว่า NoSQL"</li>
+  </ol>
+</div>
+
+<h3>ทำไม assumption ผิด</h3>
+<ul>
+  <li><strong>เรื่อง schema หลายรูปแบบ:</strong> แก้ด้วย <code>JSONB</code> column ใน Postgres ได้ — เก็บ structured column (conversation_id, sender_id, created_at) สำหรับ index/join/transaction ปกติ ส่วน payload ที่ต่างกันตาม message type เก็บใน JSONB ได้เลย ไม่ต้อง migrate schema ทุกครั้งที่เพิ่ม type ใหม่</li>
+  <li><strong>เรื่องความเร็ว:</strong> ความช้าไม่ได้มาจาก "เป็น SQL" แต่มาจาก indexing/partitioning Pattern ของ chat คือ "ดึง N ข้อความล่าสุดของ conversation" — ทำนายได้ 100% เหมาะกับ B-tree index + partitioning มาก ได้ sub-millisecond แม้ table มีพันล้าน row ข้อได้เปรียบจริงของ NoSQL คือ <em>horizontal write scaling แบบ native</em> ไม่ใช่ read speed</li>
+</ul>
+
+<h3>ตัวอย่าง schema แบบ hybrid</h3>
+<pre>CREATE TABLE messages (
+  id BIGINT PRIMARY KEY,
+  conversation_id BIGINT NOT NULL,
+  sender_id BIGINT NOT NULL,
+  message_type TEXT NOT NULL,  -- 'text' | 'image' | 'flex' | 'sticker' | 'location'
+  payload JSONB NOT NULL,       -- โครงสร้างต่างกันตาม type ได้เสรี
+  created_at TIMESTAMPTZ NOT NULL
+);
+-- index: (conversation_id, created_at DESC)</pre>
+
+<h3>เกณฑ์เลือกจริง</h3>
+<table>
+  <tr><th>เกณฑ์</th><th>Postgres (JSONB)</th><th>NoSQL (Cassandra/DynamoDB/Mongo)</th></tr>
+  <tr><td>Write throughput</td><td>หลักพัน-หมื่น msg/sec</td><td>หลักแสน-ล้าน msg/sec ต่อเนื่อง (Discord/WhatsApp scale)</td></tr>
+  <tr><td>Join กับ user/order/billing</td><td>✅ จำเป็น</td><td>❌ ต้อง denormalize เอง</td></tr>
+  <tr><td>Transaction (mark-as-read + unread count)</td><td>✅ ACID native</td><td>ต้องจัดการ consistency เอง</td></tr>
+  <tr><td>Multi-region active-active</td><td>ยากกว่า (Citus/manual sharding)</td><td>✅ native</td></tr>
+  <tr><td>Ops team ดูแล distributed DB</td><td>ไม่ต้อง</td><td>ต้องมีทีมดูแล cluster</td></tr>
+</table>
+
+<div class="note">
+  <strong>Recommendation:</strong> อยู่กับ Postgres + JSONB + partitioning + composite index จนกว่าจะมี pain point จริง (ตัวเลข write throughput ที่วัดแล้วเกินกำลัง single node) — ย้ายไป NoSQL ล่วงหน้าคือ premature optimization
+</div>
+
+<h3>ระดับคำถามนี้ในการสัมภาษณ์</h3>
+<p>ถ้าถามแบบฝัง assumption ("chat ต้อง NoSQL เพราะ...") ถือเป็นคำถามระดับ <span class="badge mid">MID-LEVEL</span> — สัญญาณ senior จริงคือ<strong>จับ assumption ผิดได้ก่อนตอบ</strong> ไม่ใช่แค่เลือกฝั่งถูก การยกระดับเป็น senior ต้องถามแบบ open-ended + follow-up เรื่อง partition key design / ตัวเลข traffic จริง</p>
+
+<!-- ===================== SECTION 4 ===================== -->
+<h2>4. Prep Checklist — จุดที่ไม่ถนัด (SQL / Docker / K8s)</h2>
+
+<h3>SQL <span class="badge high">HIGH ROI</span></h3>
+<ul>
+  <li><strong>JOIN types:</strong> INNER vs LEFT vs RIGHT + ตัวอย่างจริง (LEFT JOIN หา user ที่ยังไม่เคยสั่งซื้อ)</li>
+  <li><strong>Index:</strong> B-tree เบื้องหลังคร่าวๆ, composite index ลำดับ column สำคัญ (<code>WHERE a=1 AND b=2</code> → index <code>(a,b)</code>)</li>
+  <li><strong>N+1 query:</strong> อธิบาย + วิธีแก้ (JOIN, batch fetch, DataLoader)</li>
+  <li><strong>Transaction/ACID:</strong> อธิบายด้วยตัวอย่างจริง ไม่ใช่ท่องนิยาม</li>
+  <li><strong>Normalization:</strong> 1NF/2NF/3NF คร่าวๆ + เหตุผล denormalize เพื่อ performance</li>
+  <li>เขียนมือ: <code>GROUP BY</code> + <code>HAVING</code>, subquery, <code>EXISTS</code> vs <code>IN</code></li>
+  <li>Pagination: <code>LIMIT/OFFSET</code> vs keyset pagination + trade-off</li>
+  <li><code>EXPLAIN ANALYZE</code> ใช้ debug slow query</li>
+</ul>
+<div class="warn">กับดัก: สับสน <code>WHERE</code> vs <code>HAVING</code> (WHERE filter ก่อน GROUP BY, HAVING filter หลัง) / ลืมพูด trade-off ว่า index ช่วย read แต่ทำให้ write ช้าลง</div>
+
+<h3>Docker <span class="badge mid">MID ROI</span></h3>
+<ul>
+  <li>Image vs Container ต่างกันยังไง</li>
+  <li>Dockerfile layer caching — ทำไม <code>COPY package.json</code> ก่อน <code>npm install</code> แล้วค่อย <code>COPY . .</code></li>
+  <li>Multi-stage build — ลด image size, ไม่เอา build tool ไปติด production image</li>
+  <li>Volume vs Bind mount</li>
+  <li>docker-compose: <code>depends_on</code> รอ container start ไม่ใช่รอ service "พร้อม" จริง</li>
+</ul>
+
+<h3>Kubernetes <span class="badge mid">MID ROI (concept พอ)</span></h3>
+<ul>
+  <li><strong>Pod</strong> — unit เล็กที่สุด มักมี 1 container</li>
+  <li><strong>Deployment</strong> — จัดการ replica, rolling update</li>
+  <li><strong>Service</strong> — ClusterIP/NodePort/LoadBalancer ต่างกันยังไง</li>
+  <li><strong>ConfigMap/Secret</strong> — แยก config/credential จาก image</li>
+  <li><strong>Ingress</strong> — routing HTTP เข้า cluster</li>
+  <li><strong>HPA</strong> — scale ตาม CPU/memory</li>
+  <li>Liveness vs Readiness probe (restart ถ้าตาย vs ไม่ส่ง traffic ถ้ายังไม่พร้อม)</li>
+  <li>Debug Pod crash loop: <code>kubectl logs</code>, <code>kubectl describe pod</code></li>
+</ul>
+<div class="note">ถ้า K8s ไม่ได้ลงมือทำเองมาก่อน — พูดตรงๆ ว่า "เคยใช้ระดับ concept/deploy ผ่าน manifest คนอื่นเซ็ตไว้ แต่ยังไม่ได้ design cluster เอง" ดีกว่าเดาแล้วโป๊ะตอน follow-up</div>
+
+<h3>ลำดับเตรียมตัวถ้าเวลาจำกัด</h3>
+<table>
+  <tr><th>ลำดับ</th><th>เรื่อง</th><th>เวลา</th></tr>
+  <tr><td>1</td><td>SQL: JOIN + Index + N+1</td><td>30 นาที</td></tr>
+  <tr><td>2</td><td>Docker: multi-stage build + image vs container</td><td>20 นาที (เขียน Dockerfile เอง 1 ไฟล์)</td></tr>
+  <tr><td>3</td><td>K8s: Pod/Deployment/Service/probe</td><td>20 นาที (แค่นิยาม+หน้าที่)</td></tr>
+  <tr><td>4</td><td>ฝึกพูดอธิบายออกเสียง ไม่ใช่แค่จำ</td><td>ต่อเนื่อง</td></tr>
+</table>
+
+</body>
+</html>
