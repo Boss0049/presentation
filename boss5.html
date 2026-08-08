@@ -1,0 +1,611 @@
+<title>nest-encrypt-decrypt-api — สรุปการสร้างทั้งหมด</title>
+<style>
+  :root {
+    --ground: #1B1E2B;
+    --surface: #242838;
+    --surface-2: #2D3146;
+    --text: #E6E8F0;
+    --muted: #9298AE;
+    --line: #393E54;
+    --accent: #4FD1C5;   /* teal — ถูกต้อง / fix / green */
+    --accent-2: #F2885B; /* coral — ผิด / bug / red */
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(79,209,197,0.07), transparent 60%),
+      radial-gradient(900px 600px at -10% 20%, rgba(242,136,91,0.05), transparent 55%),
+      var(--ground);
+    color: var(--text);
+    font-family: var(--sans);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 72px 24px 120px; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+  }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(28px, 5vw, 46px);
+    line-height: 1.12;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 20px;
+  }
+  h1 .file { color: var(--accent); }
+
+  .lede {
+    font-size: 18px;
+    color: var(--muted);
+    max-width: 68ch;
+    margin: 0 0 8px;
+  }
+  .lede strong { color: var(--text); font-weight: 600; }
+
+  /* ---------- top stat row ---------- */
+  .stats { display: flex; flex-wrap: wrap; gap: 14px; margin: 40px 0 8px; }
+  .stat {
+    flex: 1 1 150px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+  .stat .n { font-family: var(--mono); font-size: 22px; font-weight: 600; color: var(--accent); }
+  .stat .l { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+
+  /* ---------- sections ---------- */
+  section { margin-top: 64px; }
+  .sec-head {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 12px;
+    margin-bottom: 28px;
+  }
+  .sec-num { font-family: var(--mono); font-size: 13px; color: var(--accent); }
+  .sec-head h2 { font-family: var(--mono); font-size: 20px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+  }
+  .card h3 { margin: 0 0 6px; font-size: 17px; font-weight: 600; }
+  .card .why { color: var(--muted); font-size: 14.5px; margin: 0 0 14px; }
+  .card p { margin: 0 0 10px; }
+  .card p:last-child { margin-bottom: 0; }
+
+  code, pre { font-family: var(--mono); font-size: 13.5px; }
+  code.inline {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 6px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  pre {
+    background: #15171f;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    line-height: 1.6;
+    margin: 0 0 4px;
+  }
+  pre .c { color: var(--muted); }
+  pre .k { color: var(--accent-2); }
+  pre .g { color: var(--accent); }
+  pre .s { color: #C9D1F0; }
+
+  .tag-bad, .tag-good {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 2px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    vertical-align: middle;
+    margin-left: 8px;
+  }
+  .tag-bad { color: var(--accent-2); border: 1px solid rgba(242,136,91,0.5); }
+  .tag-good { color: var(--accent); border: 1px solid rgba(79,209,197,0.5); }
+
+  /* ---------- timeline / pipeline ---------- */
+  .timeline { display: grid; gap: 16px; }
+  .track { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 20px 22px; }
+  .track.bad { border-left: 3px solid var(--accent-2); }
+  .track.good { border-left: 3px solid var(--accent); }
+  .track .label {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+  .track.bad .label { color: var(--accent-2); }
+  .track.good .label { color: var(--accent); }
+  .steps { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; }
+  .step { flex: 1 1 120px; min-width: 120px; padding: 0 14px; border-left: 1px solid var(--line); position: relative; }
+  .step:first-child { border-left: none; padding-left: 0; }
+  .step .t { font-family: var(--mono); font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .step .d { font-size: 13.5px; }
+  .step.hit .d { color: var(--accent-2); font-weight: 600; }
+  .step.win .d { color: var(--accent); font-weight: 600; }
+
+  /* ---------- tables ---------- */
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  td code { color: var(--accent); }
+  .badge { font-family: var(--mono); font-size: 11px; padding: 1px 7px; border-radius: 5px; white-space: nowrap; }
+  .badge.new { color: var(--accent); border: 1px solid rgba(79,209,197,0.45); }
+  .badge.edit { color: var(--muted); border: 1px solid var(--line); }
+  .badge.pass { color: var(--accent); border: 1px solid rgba(79,209,197,0.45); }
+  .badge.pending { color: var(--accent-2); border: 1px solid rgba(242,136,91,0.5); }
+
+  /* ---------- checklist ---------- */
+  .checklist { display: grid; gap: 10px; }
+  .chk { display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; }
+  .chk .mark { font-family: var(--mono); color: var(--accent); flex: none; }
+  .chk.warn .mark { color: var(--accent-2); }
+
+  .foot {
+    margin-top: 72px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  @media (max-width: 600px) {
+    .step { border-left: none; padding: 8px 0; border-top: 1px solid var(--line); flex: 1 1 100%; }
+    .step:first-child { border-top: none; }
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">take-home test · nest-encrypt-decrypt-api</p>
+  <h1>สร้าง <span class="file">Encrypt/Decrypt API</span> แบบ Hybrid RSA+AES ด้วย NestJS</h1>
+  <p class="lede">
+    โปรเจกต์ NestJS ใหม่ตั้งแต่ศูนย์ — 2 endpoint เข้ารหัส/ถอดรหัส payload ด้วย <strong>RSA+AES แบบ hybrid</strong>,
+    แก้ทิศทาง RSA ที่ brief เดิมเขียนผิด, ทำตาม <strong>TDD ทีละ vertical slice</strong> ทั้งหมด 11 slice,
+    ต่อด้วย security review และ bugfix เรื่อง TypeScript strict mode หลังส่งงาน
+  </p>
+
+  <div class="stats">
+    <div class="stat"><div class="n">16/16</div><div class="l">e2e tests ผ่าน</div></div>
+    <div class="stat"><div class="n">11</div><div class="l">TDD vertical slices</div></div>
+    <div class="stat"><div class="n">2</div><div class="l">endpoints (encrypt/decrypt)</div></div>
+    <div class="stat"><div class="n">0</div><div class="l">high/medium security findings</div></div>
+  </div>
+
+  <!-- 00 endpoints -->
+  <section>
+    <div class="sec-head"><span class="sec-num">00</span><h2>Endpoint ที่ต้องสร้าง</h2></div>
+    <div class="card">
+      <h3>สัญญาที่ brief กำหนด</h3>
+      <p class="why">ทั้งสอง endpoint ตอบกลับด้วย envelope เดียวกัน คู่กับ HTTP status code จริง</p>
+      <pre>POST <span class="g">/get-encrypt-data</span>   { payload: string }              (1-2000 ตัวอักษร, required)
+  → { successful, error_code, data: null | { data1, data2 } }
+
+POST <span class="g">/get-decrypt-data</span>   { data1: string, data2: string } (ทั้งคู่ required)
+  → { successful, error_code, data: null | { payload } }
+
+Swagger UI: <span class="g">/api-docs</span></pre>
+    </div>
+  </section>
+
+  <!-- 01 rsa direction bugfix -->
+  <section>
+    <div class="sec-head"><span class="sec-num">01</span><h2>แก้ทิศทาง RSA ที่ brief เดิมเขียนผิด</h2></div>
+    <div class="card">
+      <h3>Brief บอกให้เข้ารหัสด้วย private key — สลับด้านกัน</h3>
+      <p class="why">Public key เป็นของสาธารณะโดยนิยาม ถ้าเข้ารหัสด้วย private key แล้วให้ทุกคนถอดด้วย public key ได้ = ไม่มี confidentiality เลย</p>
+    </div>
+    <div class="timeline">
+      <div class="track bad">
+        <div class="label">✗ ตาม brief เดิม (ผิดหลัก crypto)</div>
+        <div class="steps">
+          <div class="step"><div class="t">encrypt</div><div class="d">เข้ารหัส data1 ด้วย <b>private key</b></div></div>
+          <div class="step hit"><div class="t">ใครก็ตาม</div><div class="d">ถือ public key แล้วถอดได้เลย</div></div>
+          <div class="step hit"><div class="t">ผล</div><div class="d">ไม่มีความลับใดๆ ถูกปกป้อง</div></div>
+        </div>
+      </div>
+      <div class="track good">
+        <div class="label">✓ แก้แล้ว — ทิศทางมาตรฐาน</div>
+        <div class="steps">
+          <div class="step"><div class="t">encrypt</div><div class="d">เข้ารหัส data1 ด้วย <b>public key</b></div></div>
+          <div class="step"><div class="t">decrypt</div><div class="d">ถอดได้เฉพาะคนถือ <b>private key</b></div></div>
+          <div class="step win"><div class="t">ผล</div><div class="d">confidentiality จริง ตามหลัก RSA</div></div>
+        </div>
+      </div>
+    </div>
+    <p style="color:var(--muted); font-size:13.5px; margin-top:14px;">deviation นี้ถูกบันทึกไว้ใน README.md ของโปรเจกต์พร้อมเหตุผล ตามที่ Boss ตัดสินใจไว้ตั้งแต่ session ก่อนหน้า (grill design)</p>
+  </section>
+
+  <!-- 02 encrypt pipeline -->
+  <section>
+    <div class="sec-head"><span class="sec-num">02</span><h2>Encrypt pipeline</h2></div>
+    <div class="timeline">
+      <div class="track good">
+        <div class="label">POST /get-encrypt-data</div>
+        <div class="steps">
+          <div class="step"><div class="t">1</div><div class="d">random 32-byte key material</div></div>
+          <div class="step"><div class="t">2</div><div class="d">SHA-256 hash → AES-256 key</div></div>
+          <div class="step"><div class="t">3</div><div class="d">random 12-byte IV (GCM มาตรฐาน)</div></div>
+          <div class="step"><div class="t">4</div><div class="d">AES-256-GCM เข้ารหัส payload → ciphertext + authTag</div></div>
+          <div class="step"><div class="t">5</div><div class="d">แพ็ก {iv, authTag, ciphertext} → JSON → base64 = <b>data2</b></div></div>
+          <div class="step win"><div class="t">6</div><div class="d">RSA-OAEP-SHA256 เข้ารหัส key material ด้วย public key → base64 = <b>data1</b></div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 decrypt pipeline -->
+  <section>
+    <div class="sec-head"><span class="sec-num">03</span><h2>Decrypt pipeline (ย้อนกลับทุกขั้นตอน)</h2></div>
+    <div class="timeline">
+      <div class="track good">
+        <div class="label">POST /get-decrypt-data</div>
+        <div class="steps">
+          <div class="step"><div class="t">1</div><div class="d">RSA-decrypt data1 ด้วย private key → key material</div></div>
+          <div class="step"><div class="t">2</div><div class="d">SHA-256 hash key material → AES-256 key (ตัวเดียวกับตอน encrypt)</div></div>
+          <div class="step"><div class="t">3</div><div class="d">base64-decode data2 → JSON.parse → {iv, authTag, ciphertext}</div></div>
+          <div class="step"><div class="t">4</div><div class="d">AES-256-GCM decrypt + verify authTag</div></div>
+          <div class="step win"><div class="t">5</div><div class="d">ได้ payload กลับมาตรงตัวเป๊ะ</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:18px;">
+      <h3>Tamper ตรงไหนก็ throw ที่ authTag เสมอ</h3>
+      <p class="why">GCM เป็น authenticated encryption — แก้ ciphertext แม้ 1 bit เดียว <code class="inline">setAuthTag()</code> จะ mismatch แล้ว throw ทันที (พิสูจน์แล้วด้วย slice 07 ด้านล่าง)</p>
+    </div>
+  </section>
+
+  <!-- 04 packing scheme -->
+  <section>
+    <div class="sec-head"><span class="sec-num">04</span><h2>ทำไมเลือกแพ็ก data1/data2 แบบ JSON + base64</h2></div>
+    <div class="card">
+      <h3>รูปแบบจริงของ data2</h3>
+      <pre>base64( JSON.stringify({
+  iv:         base64(12 bytes),
+  authTag:    base64(16 bytes),
+  ciphertext: base64(ยาวไม่คงที่ ตาม payload)
+}) )</pre>
+      <p>เทียบกับ fixed-length concatenation: ciphertext ยาวไม่คงที่ (payload 1-2000 ตัวอักษร) ทำ length-prefix เพิ่ม complexity โดยไม่ได้อะไร ส่วน JSON+base64 <b>self-describing</b>, debug ง่าย (decode แล้วอ่านเป็น JSON ตรงๆ), ไม่มีปัญหา delimiter ชนกัน</p>
+      <p>key material 32 byte เล็กกว่า RSA-2048/OAEP-SHA256 max plaintext (190 byte) มาก — ไม่ต้อง chunk data1 เลย</p>
+    </div>
+    <div class="card">
+      <h3>Quirk ของ Node ที่ comment ไว้ในโค้ด</h3>
+      <p class="why"><code class="inline">crypto.service.ts</code></p>
+      <pre><span class="c">// Buffer.from(str, 'base64') silently drops invalid characters instead of
+// throwing, so malformed data1/data2 fails downstream instead (RSA decrypt,
+// JSON.parse, or GCM authTag mismatch) — all of which land here.</span></pre>
+      <p>เพราะงั้น malformed input ไม่ throw ตอน decode แต่จะไปพังที่ RSA decrypt / JSON.parse / GCM authTag แทน — ซึ่ง catch-all เดียวกันจับได้หมดอยู่แล้ว ไม่ใช่บั๊ก</p>
+    </div>
+  </section>
+
+  <!-- 05 envelope -->
+  <section>
+    <div class="sec-head"><span class="sec-num">05</span><h2>Response envelope กับ global exception filter</h2></div>
+    <div class="card">
+      <h3>ไม่มี try/catch format response กระจายอยู่ใน controller</h3>
+      <p class="why">exception ลอยขึ้นไปให้ <code class="inline">HttpExceptionFilter</code> ตัวเดียวจับหมด แปลงเป็น envelope เดียวกันเสมอ</p>
+      <table>
+        <thead><tr><th>Exception</th><th>HTTP Status</th><th>error_code</th></tr></thead>
+        <tbody>
+          <tr><td><code>BadRequestException</code> (จาก ValidationPipe)</td><td>400</td><td><code>VALIDATION_ERROR</code></td></tr>
+          <tr><td><code>DecryptionFailedException</code> (custom)</td><td>422</td><td><code>DECRYPTION_FAILED</code></td></tr>
+          <tr><td>อื่นๆ ที่ไม่รู้จัก</td><td>500 (บังคับเสมอ ไม่เชื่อ status ที่ exception อ้างเอง)</td><td><code>INTERNAL_ERROR</code></td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:14px;">จุดเดียวที่มี try/catch จริงคือใน <code class="inline">CryptoService.decrypt()</code> — รวบทุก failure (RSA error, JSON.parse error, GCM authTag error) ให้กลายเป็น <code class="inline">DecryptionFailedException</code> เดียวก่อนถึง filter เพื่อไม่ให้ผู้โจมตีแยกออกว่า fail ที่ขั้นไหน (ป้องกัน oracle-style attack)</p>
+    </div>
+  </section>
+
+  <!-- 06 tdd slices -->
+  <section>
+    <div class="sec-head"><span class="sec-num">06</span><h2>ลำดับ TDD — 11 vertical slices, 16 e2e tests</h2></div>
+    <table>
+      <thead><tr><th>#</th><th>Slice</th><th>Test ยืนยันอะไร</th><th>ผล</th></tr></thead>
+      <tbody>
+        <tr><td>0</td><td>Scaffold sanity</td><td>ลบ placeholder <code>app.e2e-spec.ts</code> ของ CLI ทิ้ง</td><td><span class="badge pass">n/a</span></td></tr>
+        <tr><td>1</td><td>Encrypt: payload หาย</td><td>400 / VALIDATION_ERROR</td><td><span class="badge pass">green</span></td></tr>
+        <tr><td>2</td><td>Encrypt: type/length ผิด</td><td>ไม่ใช่ string, ยาวเกิน 2000 → 400</td><td><span class="badge pass">green</span></td></tr>
+        <tr><td>3</td><td>Decrypt: data1/data2 หาย</td><td>400 / VALIDATION_ERROR</td><td><span class="badge pass">green</span></td></tr>
+        <tr><td>4</td><td>Encrypt สำเร็จจริง</td><td>data2 ไม่มี substring ของ payload ดิบ (พิสูจน์ว่าเข้ารหัสจริง)</td><td><span class="badge pass">green</span></td></tr>
+        <tr><td>5</td><td>Decrypt สำเร็จจริง</td><td>round trip กับ fixture จาก encrypt endpoint จริง ได้ payload กลับตรงตัว</td><td><span class="badge pass">green</span></td></tr>
+        <tr><td>6</td><td>Round-trip edge cases</td><td>1 ตัวอักษร, 2000 ตัวอักษรเป๊ะ, unicode/emoji, quote/backslash/newline</td><td><span class="badge pass">green ทันที</span></td></tr>
+        <tr><td>7</td><td>Decrypt fail: tamper data2</td><td>flip 1 bit ใน ciphertext → 422 / DECRYPTION_FAILED</td><td><span class="badge pass">green ทันที*</span></td></tr>
+        <tr><td>8</td><td>Decrypt fail: data1/data2 จับคู่ผิด</td><td>เอามาจากคนละ encrypt call → 422</td><td><span class="badge pass">green ทันที*</span></td></tr>
+        <tr><td>9</td><td>Decrypt fail: malformed input</td><td>string ไม่ใช่ base64/JSON ที่ valid → 422 ไม่ใช่ 400/500</td><td><span class="badge pass">green ทันที*</span></td></tr>
+        <tr><td>10</td><td>Swagger docs</td><td><code>/api-docs</code> 200, <code>/api-docs-json</code> มี path+schema ครบ 4 DTO</td><td><span class="badge pass">green</span></td></tr>
+        <tr><td>11</td><td>Wrap-up</td><td>README, curl smoke test มือ</td><td><span class="badge pass">n/a</span></td></tr>
+      </tbody>
+    </table>
+    <p style="color:var(--accent-2); font-size:13.5px; margin-top:14px;">
+      *slice 7-9 เขียว "ทันที" เพราะ catch-all ใน <code class="inline">CryptoService.decrypt()</code> ถูกเขียนไว้ล่วงหน้าตั้งแต่ตอนทำ slice 5 (ต้องมี try/catch เพื่อให้ round-trip ทำงานได้ปลอดภัยอยู่แล้ว) — แจ้งไว้ตรงๆ ว่าไม่ได้เห็น RED จริงสำหรับ 3 test นี้ ไม่ใช่ retrofit แต่เป็นผลข้างเคียงของการ implement decrypt ให้ปลอดภัยตั้งแต่แรก
+    </p>
+  </section>
+
+  <!-- 07 security review -->
+  <section>
+    <div class="sec-head"><span class="sec-num">07</span><h2>Security review — ไม่พบช่องโหว่ high/medium</h2></div>
+    <div class="card">
+      <h3>สิ่งที่เช็คแล้วผ่าน</h3>
+      <div class="checklist">
+        <div class="chk"><span class="mark">✓</span><span>RSA-OAEP + SHA-256 — padding ปลอดภัย ไม่ใช่ PKCS1v1.5 ที่เสี่ยง Bleichenbacher attack</span></div>
+        <div class="chk"><span class="mark">✓</span><span>IV สุ่มใหม่ + AES key ใหม่ (จาก key material สุ่มใหม่) ทุกครั้งที่ encrypt — ไม่มีความเสี่ยง GCM nonce reuse</span></div>
+        <div class="chk"><span class="mark">✓</span><span>AuthTag verify จริงผ่าน <code class="inline">setAuthTag()</code> — tamper แล้ว throw ถูกต้อง</span></div>
+        <div class="chk"><span class="mark">✓</span><span>Error ทุกจุด fail ถูกรวบเป็น error_code เดียว — ไม่รั่วว่า fail ที่ RSA/JSON/GCM ขั้นไหน</span></div>
+        <div class="chk"><span class="mark">✓</span><span><code class="inline">ValidationPipe({ whitelist: true })</code> ป้องกัน mass-assignment</span></div>
+        <div class="chk"><span class="mark">✓</span><span>ไม่มี stack trace หรือ internal error message หลุดออกไปใน response</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>ข้อสังเกต 2 จุด — severity ต่ำ ไม่บล็อกงาน</h3>
+      <p>1. <code class="inline">@nestjs/swagger</code> มี transitive dependency <code class="inline">js-yaml</code> ที่ npm audit เตือนเป็น high (ReDoS) — ใช้แค่ตอน build-time YAML export ของ Swagger เอง ไม่ถูกเรียกจาก route ไหนเลย ความเสี่ยงจริงต่ำมาก แก้ได้ด้วย <code class="inline">npm audit fix --force</code> แต่จะ downgrade เป็น breaking change เลยตัดสินใจเก็บไว้เฉยๆ</p>
+      <p>2. <code class="inline">data1</code>/<code class="inline">data2</code> ใน DecryptRequestDto ไม่มี max length — Express body-parser จำกัดไว้ที่ 100kb เป็นด่านแรกอยู่แล้ว <b>Boss ตัดสินใจไม่ต้องเพิ่ม</b> <code class="inline">@MaxLength</code> เพิ่ม (ความเสี่ยงจริงต่ำ ไม่คุ้ม complexity)</p>
+    </div>
+    <p style="color:var(--muted); font-size:13.5px;">หมายเหตุ: skill <code class="inline">/security-review</code> เรียกไม่ได้เพราะเช็ค cwd ของ session หลัก (second_brain) ซึ่งไม่ใช่ git repo ของโปรเจกต์นี้ — รีวิวนี้ทำแบบ manual แทน</p>
+  </section>
+
+  <!-- 08 post-build bugfix -->
+  <section>
+    <div class="sec-head"><span class="sec-num">08</span><h2>Bugfix หลังส่งงาน: TypeScript ts(2564)</h2></div>
+    <div class="card">
+      <h3>Error: Property 'data1' has no initializer and is not definitely assigned in the constructor</h3>
+      <p class="why">DTO ของ NestJS ไม่เคยถูก <code class="inline">new</code> ขึ้นมาพร้อม field ครบผ่าน constructor — <code class="inline">class-validator</code>/<code class="inline">class-transformer</code> เป็นคนเติมค่าให้ตอน runtime (จาก request body) ดังนั้น field ที่ declare แบบ <code class="inline">data1: string;</code> เฉยๆ TypeScript จะมองว่า "อาจไม่เคยถูก assign เลย" ภายใต้ strict mode</p>
+      <pre><span class="k">// ก่อนแก้ — TS มองว่าไม่ชัวร์ว่าถูก assign</span>
+export class DecryptRequestDto {
+  @IsNotEmpty()
+  @IsString()
+  data1<span class="k">: string;</span>
+}
+
+<span class="g">// หลังแก้ — definite assignment assertion (!) บอก TS ว่ารู้แน่นอนว่าจะมีค่า</span>
+export class DecryptRequestDto {
+  @IsNotEmpty()
+  @IsString()
+  data1<span class="g">!: string;</span>
+}</pre>
+      <p>แก้ทุก DTO field ในโปรเจกต์ให้ตรงกันหมด (encrypt/decrypt request + response DTOs) เป็น pattern มาตรฐานของ NestJS พร้อมกันนั้นก็เจอ <code class="inline">ApiErrorResponseDto</code> ที่สร้างไว้ตอน slice แรกๆ แต่ไม่เคยถูก import ใช้จริงเลย — ลบทิ้งไปด้วยแทนที่จะแปะ <code class="inline">!</code> ให้โค้ดที่ไม่มีใครใช้</p>
+      <p>ยืนยันแล้วว่า <code class="inline">npx tsc --noEmit</code> ผ่านทั้งแบบปกติและแบบ <code class="inline">--strict</code>, <code class="inline">npm run build</code>, <code class="inline">npm run lint</code>, และ e2e ทั้ง 16 test ยังผ่านครบหลังแก้</p>
+    </div>
+  </section>
+
+  <!-- 09 code walkthrough -->
+  <section>
+    <div class="sec-head"><span class="sec-num">09</span><h2>Code walkthrough — อธิบายทุกไฟล์ตามลำดับที่ request ไหลผ่าน</h2></div>
+
+    <div class="card">
+      <h3>1. Bootstrap — <code class="inline">src/main.ts</code></h3>
+      <pre>async function bootstrap() {
+  const app = <span class="g">await NestFactory.create(AppModule)</span>;
+  <span class="g">setupApp(app)</span>;
+  await app.listen(process.env.PORT ?? 3000);
+}
+<span class="g">void bootstrap()</span>;</pre>
+      <p>สร้าง Nest app จาก <code class="inline">AppModule</code> แล้วเรียก <code class="inline">setupApp(app)</code> ก่อน listen — แยกฟังก์ชันนี้ออกมาต่างหากเพราะ <b>e2e test ทุกไฟล์ต้องเรียกอันเดียวกันนี้</b> ตอน bootstrap <code class="inline">TestingModule</code> ไม่งั้น test จะไม่มี validation/filter/swagger เหมือน production จริง <code class="inline">void bootstrap()</code> คือบอก ESLint ว่าตั้งใจไม่ await promise นี้ (มันเป็น entry point ไม่มีใคร await มันอยู่แล้ว)</p>
+    </div>
+
+    <div class="card">
+      <h3>2. <code class="inline">src/setup-app.ts</code> — global wiring</h3>
+      <pre>export function setupApp(app: INestApplication) {
+  app.useGlobalPipes(new ValidationPipe({ whitelist: <span class="g">true</span>, transform: <span class="g">true</span> }));
+  app.useGlobalFilters(new HttpExceptionFilter());
+  setupSwagger(app);
+}</pre>
+      <p>3 บรรทัดนี้คือ "ระบบประสาทส่วนกลาง" ของทั้ง API:</p>
+      <p><code class="inline">ValidationPipe({ whitelist: true, transform: true })</code> — เช็ค DTO validation อัตโนมัติทุก request ก่อนเข้า controller เลย <code class="inline">whitelist</code> ตัด field แปลกปลอมที่ไม่ได้ประกาศใน DTO ทิ้ง (กัน mass-assignment) <code class="inline">transform</code> แปลง plain JSON object ให้กลายเป็น instance ของ DTO class จริงๆ — ถ้าไม่ transform, <code class="inline">@IsString()</code> จะไม่รู้จัก field เพราะ request body ที่มาจาก Express เป็นแค่ plain object เฉยๆ</p>
+      <p><code class="inline">useGlobalFilters(new HttpExceptionFilter())</code> — exception ทุกตัวที่ throw ในแอปวิ่งมาจบที่ filter ตัวนี้ที่เดียว (อธิบายละเอียดในข้อ 11)</p>
+      <p><code class="inline">setupSwagger(app)</code> — ผูก Swagger เข้ากับ app instance เดียวกัน</p>
+    </div>
+
+    <div class="card">
+      <h3>3. <code class="inline">src/swagger.ts</code></h3>
+      <pre>const document = SwaggerModule.createDocument(app, config);
+SwaggerModule.setup(<span class="g">'api-docs'</span>, app, document);</pre>
+      <p>สแกน decorators (<code class="inline">@ApiTags</code>, <code class="inline">@ApiOperation</code>, <code class="inline">@ApiProperty</code> ฯลฯ) จากทุก controller/DTO ที่ registered ใน <code class="inline">app</code> แล้ว generate OpenAPI spec ขึ้นมาสด ๆ เสิร์ฟที่ <code class="inline">/api-docs</code> (หน้า UI) และ <code class="inline">/api-docs-json</code> (raw spec ที่ test slice 10 เอาไป assert ว่ามี path/schema ครบ)</p>
+    </div>
+
+    <div class="card">
+      <h3>4. Config — <code class="inline">app.module.ts</code> + <code class="inline">env.validation.ts</code></h3>
+      <pre>ConfigModule.forRoot({ isGlobal: <span class="g">true</span>, validationSchema: envValidationSchema })</pre>
+      <p><code class="inline">isGlobal: true</code> ทำให้ <code class="inline">ConfigService</code> inject ที่ไหนก็ได้ในแอปโดยไม่ต้อง import <code class="inline">ConfigModule</code> ซ้ำในทุกโมดูล <code class="inline">validationSchema</code> คือ Joi object ที่บังคับว่า <code class="inline">.env</code> <b>ต้องมี</b> <code class="inline">RSA_PUBLIC_KEY</code>/<code class="inline">RSA_PRIVATE_KEY</code> — ถ้าไม่มี แอปจะ<b>ไม่ยอม start เลย</b> ตั้งแต่ตอน boot (fail fast ดีกว่าไปพังตอนมี encrypt request แรกเข้ามา)</p>
+    </div>
+
+    <div class="card">
+      <h3>5. DI wiring — <code class="inline">crypto.module.ts</code></h3>
+      <pre>@Module({
+  controllers: [CryptoController],
+  providers: [RsaService, AesService, CryptoService],
+})
+export class CryptoModule {}</pre>
+      <p>ประกาศว่าโมดูลนี้มี controller ตัวเดียว (<code class="inline">CryptoController</code>) และ provider (service) 3 ตัว — Nest จะสร้าง instance ของทั้ง 3 ตัวนี้แบบ singleton แล้ว inject ผ่าน constructor ให้เองตาม dependency graph (<code class="inline">CryptoController</code> ต้องการ <code class="inline">CryptoService</code>, <code class="inline">CryptoService</code> ต้องการ <code class="inline">RsaService</code> + <code class="inline">AesService</code>)</p>
+    </div>
+
+    <div class="card">
+      <h3>6. HTTP layer — <code class="inline">crypto.controller.ts</code></h3>
+      <pre>@Post(<span class="g">'get-encrypt-data'</span>)
+@HttpCode(HttpStatus.OK)
+encrypt(@Body() dto: EncryptRequestDto) {
+  const data = this.cryptoService.encrypt(dto.payload);
+  return { successful: <span class="g">true</span>, error_code: <span class="g">''</span>, data };
+}</pre>
+      <p>สังเกตว่า controller <b>ไม่มี try/catch เลย</b> — ถ้า <code class="inline">cryptoService.encrypt()</code>/<code class="inline">.decrypt()</code> throw อะไรออกมา มันจะลอยตรงไปหา <code class="inline">HttpExceptionFilter</code> ทันที เป็น design ที่ตั้งใจ ไม่ใช่ลืมเขียน error handling</p>
+      <p><code class="inline">@HttpCode(HttpStatus.OK)</code> ต้องใส่เพราะ Nest default ของ <code class="inline">@Post</code> คือ 201 Created ซึ่งไม่ตรงกับ spec ที่ต้องการ 200 ทั้งสอง endpoint ตอน success</p>
+      <p><code class="inline">dto: EncryptRequestDto</code> ผ่านการ validate โดย global pipe ไปแล้วตั้งแต่ก่อนเข้า method นี้ — ถ้า <code class="inline">dto.payload</code> ไม่ผ่านเงื่อนไขใน DTO, method นี้จะไม่ถูกเรียกเลยด้วยซ้ำ (pipe คืน 400 ไปก่อน)</p>
+    </div>
+
+    <div class="card">
+      <h3>7. DTOs — validation + Swagger schema ในตัวเดียว</h3>
+      <pre>export class DecryptRequestDto {
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  data1<span class="g">!</span>: string;   <span class="c">// definite assignment assertion — ดูข้อ 08 ด้านบน</span>
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  data2<span class="g">!</span>: string;
+}</pre>
+      <p>DTO class เดียวทำหน้าที่ 2 อย่างพร้อมกัน: <code class="inline">@IsNotEmpty()</code>/<code class="inline">@IsString()</code>/<code class="inline">@Length()</code> จาก <code class="inline">class-validator</code> ให้ <code class="inline">ValidationPipe</code> เช็ค request จริง ส่วน <code class="inline">@ApiProperty()</code> จาก <code class="inline">@nestjs/swagger</code> ให้ Swagger generate schema — เขียนที่เดียว ได้ทั้ง validation และ documentation ตรงกันเป๊ะ ไม่มีวันเพี้ยนจากกัน</p>
+      <p>มี 4 ไฟล์ทำหน้าที่นี้: <code class="inline">encrypt-request.dto.ts</code>, <code class="inline">decrypt-request.dto.ts</code> (request), <code class="inline">encrypt-response.dto.ts</code>, <code class="inline">decrypt-response.dto.ts</code> (response — ใช้แค่กับ <code class="inline">@ApiResponse()</code> ให้ Swagger รู้ shape ตอนตอบกลับ ไม่ได้ผ่าน validation เพราะเป็นข้อมูลขาออก)</p>
+    </div>
+
+    <div class="card">
+      <h3>8. ตัวประสานงาน — <code class="inline">crypto.service.ts</code></h3>
+      <pre>encrypt(payload: string) {
+  const keyMaterial = this.aesService.generateKeyMaterial();
+  const data2 = this.aesService.encrypt(payload, keyMaterial);
+  const data1 = this.rsaService.encrypt(keyMaterial).toString(<span class="g">'base64'</span>);
+  return { data1, data2 };
+}
+
+decrypt(data1: string, data2: string) {
+  <span class="g">try</span> {
+    const keyMaterial = this.rsaService.decrypt(Buffer.from(data1, <span class="g">'base64'</span>));
+    const payload = this.aesService.decrypt(data2, keyMaterial);
+    return { payload };
+  } <span class="g">catch</span> {
+    <span class="k">throw new DecryptionFailedException()</span>;
+  }
+}</pre>
+      <p>ตัวนี้ไม่รู้จัก crypto algorithm เลยสักตัว รู้แค่ลำดับ "เรียก AES ก่อนแล้วเอา key material ไปเข้า RSA" — แยก concern ชัดเจน: <code class="inline">RsaService</code>/<code class="inline">AesService</code> ไม่รู้จักกันเอง ไม่มีใครอ้างอิงอีกฝั่งเลย ทำให้ทดสอบ/แก้แยกกันได้อิสระ</p>
+      <p><code class="inline">try/catch</code> ที่นี่คือจุดเดียวในทั้งโปรเจกต์ที่ดัก error ของ crypto logic เอง — ไม่สนว่า fail เพราะอะไร (RSA decrypt พัง, JSON.parse พัง, หรือ GCM authTag mismatch) โยนเป็น <code class="inline">DecryptionFailedException</code> เดียวกันหมด เพื่อไม่ให้ผู้โจมตีแยกได้ว่า fail ที่ขั้นไหน (ป้องกัน oracle-style attack ตามที่เขียนไว้ใน section 07)</p>
+    </div>
+
+    <div class="card">
+      <h3>9. <code class="inline">rsa.service.ts</code> — RSA-OAEP</h3>
+      <pre>constructor(configService: ConfigService) {
+  this.publicKey = configService
+    .getOrThrow&lt;string&gt;(<span class="g">'RSA_PUBLIC_KEY'</span>)
+    .replace(<span class="c">/\\n/g</span>, <span class="g">'\n'</span>);   <span class="c">// .env เก็บ \n เป็น literal 2 ตัวอักษร ต้องแปลงกลับเป็น newline จริง</span>
+  <span class="c">// ... privateKey เหมือนกัน</span>
+}
+
+encrypt(data: Buffer): Buffer {
+  return publicEncrypt(
+    { key: this.publicKey, padding: constants.RSA_PKCS1_OAEP_PADDING, oaepHash: <span class="g">'sha256'</span> },
+    data,
+  );
+}</pre>
+      <p><code class="inline">getOrThrow()</code> แทน <code class="inline">get()</code> เฉยๆ — ถ้า key หายไปจาก config จะ throw ทันทีตอน constructor รัน (ตอน app boot) ไม่ใช่ไปพังแบบเงียบๆ ตอนมี request เข้ามาแล้ว</p>
+      <p>key อ่านจาก <code class="inline">ConfigService</code> แค่ครั้งเดียวตอน constructor แล้ว cache ไว้ในตัวแปร instance (<code class="inline">private readonly</code>) — ไม่ parse ซ้ำทุก request</p>
+      <p><code class="inline">RSA_PKCS1_OAEP_PADDING</code> + <code class="inline">oaepHash: 'sha256'</code> คือ padding ที่ตั้งใจเลือก (ไม่ใช่ default) เพราะ PKCS1v1.5 padding แบบเก่ามีช่องโหว่ Bleichenbacher attack ที่รู้จักกันดี ส่วน <code class="inline">encrypt()</code>/<code class="inline">decrypt()</code> ใช้ key คนละดอกกัน (public/private) ตามที่แก้จาก brief เดิมใน section 01</p>
+    </div>
+
+    <div class="card">
+      <h3>10. <code class="inline">aes.service.ts</code> — AES-256-GCM + pack/unpack</h3>
+      <pre>encrypt(payload: string, keyMaterial: Buffer): string {
+  const key = this.deriveKey(keyMaterial);        <span class="c">// sha256(keyMaterial) → 32 byte พอดีสำหรับ AES-256</span>
+  const iv = randomBytes(IV_LENGTH);               <span class="c">// 12 byte สุ่มใหม่ทุกครั้ง</span>
+  const cipher = createCipheriv(<span class="g">'aes-256-gcm'</span>, key, iv);
+  const ciphertext = Buffer.concat([cipher.update(payload, <span class="g">'utf8'</span>), cipher.final()]);
+  const authTag = cipher.getAuthTag();             <span class="c">// GCM คำนวณ tag ยืนยันความถูกต้องให้อัตโนมัติ</span>
+
+  const packed = { iv: ..., authTag: ..., ciphertext: ... };  <span class="c">// แต่ละตัว base64 แยกกัน</span>
+  return Buffer.from(JSON.stringify(packed)).toString(<span class="g">'base64'</span>);
+}</pre>
+      <p><code class="inline">deriveKey()</code> เป็น <code class="inline">private</code> method — ใช้ภายในคลาสนี้เท่านั้น ไม่มีใครข้างนอกต้องรู้ว่า AES key มาจากการ hash key material ด้วย SHA-256</p>
+      <p>ทำไมต้อง hash ก่อน: <code class="inline">keyMaterial</code> ที่สุ่มมาคือ <code class="inline">randomBytes(32)</code> ซึ่งจริงๆ ก็ 32 byte พอดีสำหรับ AES-256 อยู่แล้ว แต่ hash ผ่าน SHA-256 อีกชั้นเป็นการยืนยัน (defensive) ว่าได้ key length ที่ถูกต้องเป๊ะเสมอไม่ว่าจะเปลี่ยนวิธีสุ่มยังไงในอนาคต</p>
+      <p><code class="inline">decrypt()</code> ทำย้อนกลับ: unpack JSON → <code class="inline">setAuthTag()</code> → <code class="inline">decipher.update()</code>+<code class="inline">final()</code> — ถ้า ciphertext หรือ authTag ถูกแก้แม้ 1 bit, <code class="inline">final()</code> จะ throw ทันที (นี่คือกลไกที่ทำให้ test slice 07 "tamper data2" ได้ผลลัพธ์ 422 จริง)</p>
+    </div>
+
+    <div class="card">
+      <h3>11. Error handling 3 ไฟล์ที่ทำงานร่วมกัน</h3>
+      <pre><span class="c">// error-code.enum.ts — string constant กันพิมพ์ผิด</span>
+export enum ErrorCode {
+  VALIDATION_ERROR = <span class="g">'VALIDATION_ERROR'</span>,
+  DECRYPTION_FAILED = <span class="g">'DECRYPTION_FAILED'</span>,
+  INTERNAL_ERROR = <span class="g">'INTERNAL_ERROR'</span>,
+}
+
+<span class="c">// decryption-failed.exception.ts — HttpException ชนิดใหม่ที่ Nest เข้าใจเอง</span>
+export class DecryptionFailedException extends HttpException {
+  constructor() { super(<span class="g">'Decryption failed'</span>, HttpStatus.UNPROCESSABLE_ENTITY); }
+}
+
+<span class="c">// http-exception.filter.ts — จุดรวมทุกอย่าง (@Catch() ไม่ใส่ type = จับทุก exception)</span>
+@Catch()
+export class HttpExceptionFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    <span class="c">// if/else if/else ไล่เช็คชนิด exception → เลือก status + error_code</span>
+    <span class="c">// ตอบกลับ { successful: false, error_code, data: null } เสมอ 3 field นี้เท่านั้น</span>
+  }
+}</pre>
+      <p><code class="inline">@Catch()</code> ไม่ระบุ type ในวงเล็บ = จับ exception <b>ทุกชนิด</b> ที่ throw ในแอป ไม่ใช่แค่ <code class="inline">HttpException</code> — สำคัญเพราะ error ที่ไม่คาดคิด (เช่น bug ที่ยังไม่รู้) ก็ต้องถูกแปลงเป็น envelope เดียวกัน ไม่ใช่ปล่อยให้ Express ตอบ HTML error page แบบ default</p>
+      <p>ลำดับการเช็คใน <code class="inline">if/else if/else</code> สำคัญ: เช็ค <code class="inline">BadRequestException</code> (มาจาก validation) ก่อน, แล้วค่อย <code class="inline">DecryptionFailedException</code> (custom), <b>อะไรที่ไม่เข้าเงื่อนไขไหนเลยบังคับเป็น 500/INTERNAL_ERROR เสมอ</b> — ไม่เชื่อ status ที่ exception แปลกๆ อ้างเอง กันไม่ให้ error ที่ไม่รู้จักหลุดไปเป็น status code ที่ดูเหมือนปลอดภัยกว่าความเป็นจริง</p>
+    </div>
+  </section>
+
+  <!-- 10 files -->
+  <section>
+    <div class="sec-head"><span class="sec-num">∑</span><h2>ไฟล์ทั้งหมดที่สร้าง</h2></div>
+    <table>
+      <thead><tr><th>ไฟล์</th><th>สถานะ</th><th>ทำอะไร</th></tr></thead>
+      <tbody>
+        <tr><td><code>src/main.ts</code></td><td><span class="badge edit">edit</span></td><td>bootstrap — เรียก <code>setupApp()</code> ก่อน listen</td></tr>
+        <tr><td><code>src/setup-app.ts</code></td><td><span class="badge new">new</span></td><td>global pipe + global filter + swagger — ใช้ร่วมกันทั้ง main.ts และทุก e2e test</td></tr>
+        <tr><td><code>src/swagger.ts</code></td><td><span class="badge new">new</span></td><td><code>SwaggerModule.setup('api-docs', ...)</code></td></tr>
+        <tr><td><code>src/app.module.ts</code></td><td><span class="badge edit">edit</span></td><td><code>ConfigModule.forRoot()</code> + <code>CryptoModule</code></td></tr>
+        <tr><td><code>src/config/env.validation.ts</code></td><td><span class="badge new">new</span></td><td>Joi schema — บังคับ RSA_PUBLIC_KEY/RSA_PRIVATE_KEY ต้องมี</td></tr>
+        <tr><td><code>src/common/enums/error-code.enum.ts</code></td><td><span class="badge new">new</span></td><td>VALIDATION_ERROR / DECRYPTION_FAILED / INTERNAL_ERROR</td></tr>
+        <tr><td><code>src/common/exceptions/decryption-failed.exception.ts</code></td><td><span class="badge new">new</span></td><td>HttpException 422 แบบ custom</td></tr>
+        <tr><td><code>src/common/filters/http-exception.filter.ts</code></td><td><span class="badge new">new</span></td><td>global filter — แปลง exception ทุกชนิดเป็น envelope เดียวกัน</td></tr>
+        <tr><td><code>src/crypto/crypto.module.ts</code></td><td><span class="badge new">new</span></td><td>ผูก controller + services เข้าด้วยกัน</td></tr>
+        <tr><td><code>src/crypto/crypto.controller.ts</code></td><td><span class="badge new">new</span></td><td>route ทั้งสอง endpoint + Swagger decorators</td></tr>
+        <tr><td><code>src/crypto/crypto.service.ts</code></td><td><span class="badge new">new</span></td><td>ประสาน RsaService + AesService, catch-all ตอน decrypt</td></tr>
+        <tr><td><code>src/crypto/rsa.service.ts</code></td><td><span class="badge new">new</span></td><td>RSA-OAEP-SHA256 encrypt/decrypt</td></tr>
+        <tr><td><code>src/crypto/aes.service.ts</code></td><td><span class="badge new">new</span></td><td>AES-256-GCM encrypt/decrypt + pack/unpack JSON envelope</td></tr>
+        <tr><td><code>src/crypto/dto/*.ts</code> (4 ไฟล์)</td><td><span class="badge new">new</span></td><td>encrypt/decrypt request + response DTOs พร้อม class-validator + Swagger decorators</td></tr>
+        <tr><td><code>test/get-encrypt-data.e2e-spec.ts</code></td><td><span class="badge new">new</span></td><td>4 tests — validation + encrypt สำเร็จ</td></tr>
+        <tr><td><code>test/get-decrypt-data.e2e-spec.ts</code></td><td><span class="badge new">new</span></td><td>6 tests — validation + decrypt สำเร็จ + 3 failure modes</td></tr>
+        <tr><td><code>test/round-trip.e2e-spec.ts</code></td><td><span class="badge new">new</span></td><td>4 tests — edge-case payloads</td></tr>
+        <tr><td><code>test/swagger.e2e-spec.ts</code></td><td><span class="badge new">new</span></td><td>2 tests — Swagger UI + OpenAPI schema</td></tr>
+        <tr><td><code>test/support/response-types.ts</code></td><td><span class="badge new">new</span></td><td>typed shape ของ response envelope ใช้ใน test (แก้ ESLint no-unsafe-* บน response.body)</td></tr>
+        <tr><td><code>.env</code></td><td><span class="badge new">new</span></td><td>demo RSA 2048-bit keypair (commit จริงตามตัดสินใจ — ไม่ใช่ production secret)</td></tr>
+        <tr><td><code>.gitignore</code></td><td><span class="badge new">new</span></td><td>ไม่มีมาตั้งแต่ scaffold (เพราะใช้ <code>--skip-git</code>) — สร้างเองไม่ให้ node_modules/dist หลุด commit</td></tr>
+        <tr><td><code>README.md</code></td><td><span class="badge edit">edit</span></td><td>เขียนใหม่ทั้งหมด — setup instructions + deviation note เรื่องทิศทาง RSA</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- 10 status -->
+  <section>
+    <div class="sec-head"><span class="sec-num">10</span><h2>สถานะปัจจุบัน / ค้างอะไรอยู่</h2></div>
+    <div class="checklist">
+      <div class="chk"><span class="mark">✓</span><span>Build + lint + e2e ทั้งหมดผ่าน, สอบผ่านทั้ง <code class="inline">tsc</code> ปกติและ <code class="inline">--strict</code></span></div>
+      <div class="chk"><span class="mark">✓</span><span>Smoke test จริงผ่าน curl แล้ว (encrypt → decrypt round trip, validation error, Swagger UI)</span></div>
+      <div class="chk"><span class="mark">✓</span><span>Git init + commit แรกเสร็จแล้ว local (branch <code class="inline">main</code>)</span></div>
+      <div class="chk warn"><span class="mark">⏸</span><span><b>ยังไม่ push ขึ้น GitHub</b> — Boss สั่งให้พักไว้ก่อน รอคำสั่งต่อไป</span></div>
+      <div class="chk"><span class="mark">✓</span><span>อัปเดต <code class="inline">second_brain/paths.md</code> (เพิ่ม <code class="inline">nest-encrypt-api</code>) และ <code class="inline">log.md</code> แล้ว</span></div>
+      <div class="chk warn"><span class="mark">⚠</span><span>เจอ entry <code class="inline">bbl-fullstack-test</code> ใน <code class="inline">paths.md</code> ที่ path ไม่มีอยู่จริงบนเครื่องนี้ — flag ไว้รอ Boss ยืนยันว่าจะแก้หรือลบ</span></div>
+    </div>
+  </section>
+
+  <p class="foot">
+    baloz · nest-encrypt-decrypt-api · take-home test build — 2026-08-08
+  </p>
+
+</div>
