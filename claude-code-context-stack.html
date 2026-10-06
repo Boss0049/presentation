@@ -1,0 +1,688 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Claude Code Context Stack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --ink:#16202B; --muted:#586676; --line:#D5DCE4;
+  --accent:#2F5BEA; --accent-soft:#E3EAFD; --amber:#B86E0A; --amber-soft:#FBEFD9;
+  --code-bg:#F4F6F9; --good:#1E7A4C;
+  --display:"Bai Jamjuree","IBM Plex Sans Thai",system-ui,sans-serif;
+  --body:"IBM Plex Sans Thai",system-ui,-apple-system,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0E141C; --surface:#16202C; --ink:#E4EAF1; --muted:#98A6B6; --line:#2A3746;
+    --accent:#86A2FF; --accent-soft:#1D2A4D; --amber:#F0B45A; --amber-soft:#3A2B14;
+    --code-bg:#101821; --good:#5FCB93;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0E141C; --surface:#16202C; --ink:#E4EAF1; --muted:#98A6B6; --line:#2A3746;
+  --accent:#86A2FF; --accent-soft:#1D2A4D; --amber:#F0B45A; --amber-soft:#3A2B14;
+  --code-bg:#101821; --good:#5FCB93;
+}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--body); font-size:17px; line-height:1.7;
+  padding-inline:16px; display:flex; flex-direction:column; box-sizing:border-box;
+}
+*,*::before,*::after{box-sizing:border-box}
+.topbar{display:flex; justify-content:space-between; align-items:center; gap:12px; padding-block:12px;
+  max-width:1120px; width:100%; margin-inline:auto; font-size:13px; color:var(--muted); letter-spacing:.04em}
+.topbar b{font-family:var(--display); color:var(--ink); font-weight:600; letter-spacing:.02em}
+.stage{flex:1; min-height:0; max-width:1120px; width:100%; margin-inline:auto; display:flex}
+.slide{flex:1; background:var(--surface); border:1px solid var(--line); border-radius:14px;
+  padding:clamp(22px,4vw,56px); overflow-y:auto; display:flex; flex-direction:column; gap:22px}
+.slide[hidden]{display:none!important}
+.eyebrow{font-family:var(--mono); font-size:12.5px; text-transform:uppercase; letter-spacing:.12em; color:var(--accent)}
+h1,h2,h3{font-family:var(--display); text-wrap:balance; margin:0; line-height:1.25}
+h1{font-size:clamp(34px,5.4vw,60px); font-weight:700}
+h2{font-size:clamp(26px,3.4vw,38px); font-weight:700}
+h3{font-size:19px; font-weight:600}
+p{margin:0; max-width:68ch}
+.lead{font-size:clamp(17px,1.7vw,20px); color:var(--muted)}
+ul{margin:0; padding-left:1.2em; display:flex; flex-direction:column; gap:6px; max-width:70ch}
+code{font-family:var(--mono); font-size:.88em; background:var(--code-bg); border:1px solid var(--line); padding:1px 6px; border-radius:5px}
+pre{margin:0; font-family:var(--mono); font-size:14px; line-height:1.6; background:var(--code-bg);
+  border:1px solid var(--line); border-radius:10px; padding:16px 18px; overflow-x:auto}
+pre code{background:none; border:0; padding:0; font-size:inherit}
+.c{color:var(--muted)} .k{color:var(--accent)} .s{color:var(--amber)}
+.grid2{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px}
+.grid3{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px}
+.panel{border:1px solid var(--line); border-radius:10px; padding:18px 20px; display:flex; flex-direction:column; gap:10px}
+.panel.hi{background:var(--accent-soft); border-color:transparent}
+.panel.warn{background:var(--amber-soft); border-color:transparent}
+.tag{font-family:var(--mono); font-size:12px; letter-spacing:.06em; color:var(--muted); text-transform:uppercase}
+.big{font-family:var(--display); font-size:clamp(40px,5vw,56px); font-weight:700; line-height:1; font-variant-numeric:tabular-nums}
+.big small{font-size:.4em; font-weight:500; color:var(--muted)}
+.table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:10px}
+table{border-collapse:collapse; width:100%; min-width:620px; font-size:15px}
+th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top}
+th{font-family:var(--display); font-weight:600; background:var(--code-bg)}
+tr:last-child td{border-bottom:0}
+table.plain td:first-child{color:inherit; white-space:normal}
+td:first-child{color:var(--muted); white-space:nowrap}
+.flow{display:flex; flex-wrap:wrap; align-items:stretch; gap:10px}
+.flow .step{flex:1 1 170px; border:1px solid var(--line); border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:4px}
+.flow .step .n{font-family:var(--mono); font-size:12px; color:var(--accent)}
+.note{font-size:14.5px; color:var(--muted); border-left:3px solid var(--amber); padding-left:12px}
+.cover{justify-content:center}
+.cover .chips{display:flex; flex-wrap:wrap; gap:8px}
+.chip{font-family:var(--mono); font-size:13.5px; padding:6px 12px; border-radius:999px; border:1px solid var(--line)}
+.chip.on{background:var(--accent); color:var(--surface); border-color:var(--accent)}
+.tree{white-space:pre}
+blockquote{margin:0; padding:14px 18px; border-left:3px solid var(--accent); background:var(--code-bg); border-radius:0 10px 10px 0; font-family:var(--mono); font-size:14px; line-height:1.65; max-width:none}
+.navbar{display:flex; align-items:center; gap:14px; padding-block:12px; max-width:1120px; width:100%; margin-inline:auto}
+.navbar button{font:600 14px var(--body); color:var(--ink); background:var(--surface); border:1px solid var(--line);
+  border-radius:8px; padding:8px 16px; cursor:pointer}
+.navbar button:hover{border-color:var(--accent)}
+.navbar button:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.navbar button:disabled{opacity:.4; cursor:default}
+.progress{flex:1; height:4px; background:var(--line); border-radius:4px; overflow:hidden}
+.progress span{display:block; height:100%; background:var(--accent); transition:width .25s}
+.count{font-family:var(--mono); font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums; min-width:52px; text-align:right}
+@media (prefers-reduced-motion:reduce){.progress span{transition:none}}
+@media (max-width:760px){
+  body{font-size:16px}
+  .grid2,.grid3{grid-template-columns:1fr}
+  .topbar .hint{display:none}
+}
+</style>
+
+<header class="topbar"><b>Claude Code · Context Stack</b><span class="hint">← → หรือ Space เพื่อเปลี่ยนสไลด์</span></header>
+
+<main class="stage" id="stage">
+
+<!-- 1 -->
+<section class="slide cover">
+  <div class="eyebrow">Claude Code Bootcamp · สรุปบทเรียน</div>
+  <h1>จัดการ Context ให้ Claude Code<br>ด้วย Rules, Auto‑memory และ Skills</h1>
+  <p class="lead">CLAUDE.md อย่างเดียวไม่พอเมื่อโปรเจกต์โตขึ้น สไลด์ชุดนี้สรุปว่าแต่ละกลไกแก้ปัญหาอะไร โหลดเข้า context เมื่อไหร่ และควรใช้ตอนไหน</p>
+  <div class="chips">
+    <span class="chip on">CLAUDE.md</span><span class="chip">.claude/rules/</span><span class="chip">Auto‑memory</span><span class="chip">.claude/skills/</span><span class="chip">.claude/commands/ (legacy)</span>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 1 · Rules</div>
+  <h2>ปัญหาของ CLAUDE.md ที่ยาว 400 บรรทัด</h2>
+  <p class="lead">กฎทุกเรื่องอยู่รวมกันในไฟล์เดียว ทั้ง React, API guidelines, DB migration, security และ testing</p>
+  <div class="grid2">
+    <div class="panel warn">
+      <h3>ตอนแก้ React component</h3>
+      <p>Claude ต้องแบกกฎเรื่อง DB migration, security และ API guidelines มาด้วย ทั้งที่ไม่เกี่ยวกับงานตรงหน้า</p>
+    </div>
+    <div class="panel warn">
+      <h3>ตอนเขียน SQL query</h3>
+      <p>ก็ต้องแบกกฎเรื่อง React patterns และ API guidelines มาด้วยเหมือนกัน</p>
+    </div>
+  </div>
+  <div class="panel hi">
+    <h3>Priority saturation</h3>
+    <p>เมื่อทุกอย่างสำคัญเท่ากันหมด ก็เท่ากับไม่มีอะไรสำคัญ ความสนใจของ Claude ถูกกระจายไปที่คำสั่งที่ไม่เกี่ยวกับงานตรงหน้า</p>
+  </div>
+  <p>ลบทิ้งก็ไม่ได้เพราะทุกข้อสำคัญต่อโปรเจกต์ ผลคือ context บวมด้วยข้อมูลที่ไม่เกี่ยวข้อง และนักพัฒนาเองก็แก้ไฟล์ยากเพราะต้องเข้าใจทั้งไฟล์ก่อน</p>
+</section>
+
+<!-- 3 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 1 · Rules</div>
+  <h2>Rules คือ markdown ที่แยกกฎทีละเรื่อง</h2>
+  <div class="grid2">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <ul>
+        <li>หนึ่งไฟล์ โฟกัสหนึ่งเรื่อง เช่น <code>code-style.md</code>, <code>testing.md</code>, <code>security.md</code></li>
+        <li>ระดับโปรเจกต์: <code>.claude/rules/</code> (ใช้บ่อยที่สุด)</li>
+        <li>ระดับผู้ใช้ (ทุกโปรเจกต์): <code>~/.claude/rules/</code></li>
+        <li>จัดเป็นโฟลเดอร์ย่อยได้ เช่น <code>database/</code></li>
+      </ul>
+      <p class="note">ข้อดีข้อแรกคือกฎเป็น module ดูแลง่าย ข้อดีข้อที่สองสำคัญกว่า คือสั่งให้โหลดกฎเฉพาะตอนที่ทำงานกับไฟล์ที่เกี่ยวข้องได้</p>
+    </div>
+<pre class="tree">.claude/rules/
+├── code-style.md    <span class="c">← โหลดเสมอ (ไม่มี path filter)</span>
+├── testing.md       <span class="c">← โหลดเสมอ</span>
+├── security.md      <span class="c">← โหลดเสมอ</span>
+├── api-rules.md     <span class="k">← เฉพาะตอนแก้ไฟล์ API</span>
+├── react-rules.md   <span class="k">← เฉพาะตอนแก้ไฟล์ React</span>
+└── database/
+    ├── migrations.md <span class="k">← เฉพาะไฟล์ migration</span>
+    └── queries.md    <span class="k">← เฉพาะไฟล์ SQL/query</span></pre>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 1 · Rules</div>
+  <h2>Rules มี 2 แบบ</h2>
+  <div class="grid2">
+    <div class="panel">
+      <span class="tag">แบบที่ 1 · Always loaded</span>
+      <p>ไม่มี <code>paths</code> ใน frontmatter โหลดตั้งแต่เริ่ม session ด้วย priority สูงเท่า CLAUDE.md เหมาะกับกฎสากลของโปรเจกต์</p>
+<pre><span class="c"># code-style.md</span>
+- Use English for all comments
+- Prefer functional approach
+- Use strict typing everywhere</pre>
+    </div>
+    <div class="panel hi">
+      <span class="tag">แบบที่ 2 · Path‑scoped</span>
+      <p>ใส่ <code>paths</code> เป็น glob pattern โหลดเมื่อ Claude อ่านไฟล์ที่ตรง pattern เท่านั้น</p>
+<pre><span class="k">---</span>
+<span class="k">paths:</span>
+  - <span class="s">"src/api/**/*.ts"</span>
+  - <span class="s">"src/handlers/**/*.ts"</span>
+<span class="k">---</span>
+# API Design Rules
+- Return consistent error shapes:
+  { error: string, code: number }
+- Log all requests with correlation IDs
+- Rate limit headers on all routes</pre>
+    </div>
+  </div>
+  <p class="note">ใส่ <code>description</code> ใน frontmatter ด้วยเสมอ ไม่บังคับแต่แนะนำ เพื่อให้ Claude รู้ว่าไฟล์นี้มีไว้ทำอะไร</p>
+</section>
+
+<!-- 5 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 1 · Rules</div>
+  <h2>แบบเดิมกับแบบใหม่ ต่างกันแค่ไหน</h2>
+  <div class="grid2">
+    <div class="panel">
+      <span class="tag">แบบเดิม · CLAUDE.md อย่างเดียว</span>
+      <div class="big">400–500 <small>บรรทัด</small></div>
+      <p>โหลดทั้งหมดทุกครั้ง ทุกกฎแย่งความสนใจกัน</p>
+    </div>
+    <div class="panel hi">
+      <span class="tag">แบบใหม่ · CLAUDE.md + rules</span>
+      <div class="big">~100 <small>บรรทัดที่ active</small></div>
+      <p>CLAUDE.md 50 บรรทัด + rules 5 ไฟล์ ไฟล์ละ 50 บรรทัด แต่โหลดจริงแค่ CLAUDE.md กับ rule ที่เกี่ยวข้อง</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table class="plain">
+      <thead><tr><th>ใส่ใน CLAUDE.md</th><th>ใส่ใน Rules</th></tr></thead>
+      <tbody>
+        <tr><td>ภาพรวมโปรเจกต์ / tech stack</td><td>coding pattern เฉพาะชนิดไฟล์</td></tr>
+        <tr><td>คำสั่ง build และ test</td><td>guideline เฉพาะ framework (React, Spring ฯลฯ)</td></tr>
+        <tr><td>ภาพรวมสถาปัตยกรรม</td><td>security rules ของโฟลเดอร์ที่อ่อนไหว</td></tr>
+        <tr><td>coding convention สากล</td><td>convention การเขียน test</td></tr>
+        <tr><td>gotcha ที่กระทบทุกส่วน</td><td>กฎความปลอดภัยของ migration</td></tr>
+        <tr><td>git workflow / branching strategy</td><td>API design guidelines</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 1 · Demo: jobportal-ui</div>
+  <h2>เช็คว่า rule ไหนโหลดแล้วด้วย <code>/memory</code></h2>
+  <p>ตัด CLAUDE.md ที่ยาว 150+ บรรทัดให้เหลือแค่ commands กับ repository structure แล้วย้ายส่วนที่เหลือไปเป็น rules</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Rule file</th><th>paths</th><th>ตอนเริ่ม session</th></tr></thead>
+      <tbody>
+        <tr><td>architecture.md</td><td>ไม่มี</td><td style="color:var(--good)">โหลดแล้ว</td></tr>
+        <tr><td>coding-standards.md</td><td>ไม่มี</td><td style="color:var(--good)">โหลดแล้ว</td></tr>
+        <tr><td>git-conventions.md</td><td>ไม่มี</td><td style="color:var(--good)">โหลดแล้ว</td></tr>
+        <tr><td>data-layer.md</td><td>services/, context/, data/</td><td>รอจนแตะไฟล์ใน path</td></tr>
+        <tr><td>routing-and-roles.md</td><td>ไฟล์ routing/roles</td><td>รอจนแตะไฟล์ใน path</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">ถ้า rule file มีปัญหา Claude Code จะแจ้ง warning ตอนเริ่ม session</p>
+</section>
+
+<!-- 7 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 2 · Auto‑memory</div>
+  <h2>Claude ที่ลืมทุกอย่างทุกคืน</h2>
+  <p class="lead">คุณใช้เวลา 20 นาทีอธิบายว่าโปรเจกต์ใช้ Vite, test อยู่ใน <code>src/__tests__/</code>, ชอบ named export, dev server รันที่พอร์ต 5173 วันรุ่งขึ้นเปิด session ใหม่ Claude จำอะไรไม่ได้เลย เหมือนคุยกับเพื่อนร่วมงานเก่งๆ ที่ความจำเสื่อมทุกคืน</p>
+  <div class="panel hi">
+    <h3>Auto‑memory: Claude จดโน้ตให้ตัวเองระหว่างทำงาน</h3>
+    <p>บันทึกวิธีที่คุณสั่งงาน เทคนิค debug สไตล์โค้ด และการตัดสินใจเชิงสถาปัตยกรรม แล้วเอากลับมาใช้ใน session ถัดไป เปิดไว้เป็นค่าเริ่มต้น ไม่ต้องตั้งค่าอะไร</p>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <span class="tag">CLAUDE.md + rules = ตำราเรียน</span>
+      <p>นักพัฒนาเป็นคนเขียน เป็นกฎที่ต้องทำตาม commit ลง git แชร์ทั้งทีม</p>
+<pre>"Use pnpm, not npm"
+"Follow Airbnb React Style Guide"
+"Never modify files in /generated/ or /dist/"
+"Run tests with pnpm test --coverage"</pre>
+    </div>
+    <div class="panel">
+      <span class="tag">Auto‑memory (MEMORY.md) = สมุดจดส่วนตัว</span>
+      <p>Claude เป็นคนเขียน เป็นสิ่งที่เรียนรู้และสังเกตเห็น อยู่ในเครื่องเราเท่านั้น ไม่ commit ลง git</p>
+<pre>"Build command for this project is pnpm build"
+"Hydration mismatch was caused by using window
+ during SSR without a useEffect guard"
+"User prefers custom hooks over render props"
+"E2E tests use Playwright, need dev server :5173"</pre>
+    </div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 2 · Auto‑memory</div>
+  <h2>หน่วยความจำ 3 ชั้นของ Claude Code</h2>
+  <div class="grid3">
+    <div class="panel">
+      <span class="tag">ชั้น 1</span><h3>CLAUDE.md</h3>
+      <p>คู่มือบริษัทที่พนักงานทุกคนต้องทำตาม</p>
+      <ul><li>เราเป็นคนเขียน</li><li>โหลดทุกครั้งที่เริ่ม session</li><li>แชร์กับทีมผ่าน git</li></ul>
+    </div>
+    <div class="panel">
+      <span class="tag">ชั้น 2</span><h3>Auto‑memory</h3>
+      <p>โพสต์อิทส่วนตัวที่แปะไว้ข้างจอ</p>
+      <ul><li>Claude เขียนเอง</li><li>โหลด 200 บรรทัดแรกตอนเริ่ม ไฟล์หัวข้อย่อยอ่านเมื่อต้องใช้</li><li>อยู่ในเครื่อง ไม่แชร์</li></ul>
+    </div>
+    <div class="panel">
+      <span class="tag">ชั้น 3</span><h3>Session memory</h3>
+      <p>จำได้ว่าประชุมครั้งก่อนค้างไว้ตรงไหน</p>
+      <ul><li>เก็บสรุประดับบทสนทนา</li><li>ช่วยจำข้าม session ในบทสนทนาล่าสุด</li><li>กลับมาต่อด้วย <code>--continue</code> / <code>--resume</code></li></ul>
+    </div>
+  </div>
+  <p>setup ที่แข็งแรงที่สุดใช้ครบทั้ง 3 ชั้น: CLAUDE.md ให้กฎที่มีอำนาจสูงสุด, auto‑memory เก็บสิ่งที่เรียนรู้ระหว่างทำงาน, session memory รักษาความต่อเนื่องของบทสนทนา</p>
+</section>
+
+<!-- 9 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 2 · Auto‑memory</div>
+  <h2>Auto‑memory ทำงานอย่างไร</h2>
+  <div class="grid2">
+<pre class="tree">~/.claude/projects/
+└── &lt;project&gt;/
+    └── memory/
+        ├── MEMORY.md          <span class="c"># index หลัก โหลดทุก session</span>
+        ├── debugging.md       <span class="c"># โน้ตเรื่อง debug</span>
+        └── api-conventions.md <span class="c"># การตัดสินใจเรื่อง API</span></pre>
+    <ul>
+      <li>หนึ่งสมุดต่อหนึ่ง repo ไม่ใช่ต่อ branch ทุก branch, worktree และโฟลเดอร์ย่อยใช้ร่วมกัน</li>
+      <li>ถ้าไม่ได้อยู่ใน git repo จะใช้ชื่อโฟลเดอร์ root ของโปรเจกต์</li>
+      <li>เห็นข้อความ <code>Writing memory</code> คือกำลังบันทึก และ <code>Recalled memory</code> คือกำลังดึงมาใช้</li>
+      <li>ไฟล์หัวข้อย่อยไม่โหลดตั้งแต่ต้น Claude อ่านเองเมื่อต้องใช้</li>
+    </ul>
+  </div>
+  <div class="panel warn">
+    <h3>ข้อจำกัด: โหลดแค่ 200 บรรทัดแรกของ MEMORY.md</h3>
+    <p>ส่วนที่เกิน 200 บรรทัดจะไม่ถูกใช้ตอนเริ่มบทสนทนา Claude จึงย้ายรายละเอียดไปไว้ในไฟล์แยกตามหัวข้อ ขีดจำกัดนี้ใช้กับ MEMORY.md เท่านั้น CLAUDE.md โหลดทั้งไฟล์ไม่ว่ายาวแค่ไหน แต่ยิ่งสั้นยิ่งแม่นและสม่ำเสมอ</p>
+    <p class="note">แนะนำให้เข้าไปดูโฟลเดอร์ memory อย่างน้อยเดือนละครั้ง แล้วแก้หรือลบสิ่งที่ไม่ถูกต้อง</p>
+  </div>
+</section>
+
+<!-- 10 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 2 · Auto‑memory</div>
+  <h2>ควบคุมและสั่งให้จำ</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>ตั้งค่า auto‑memory</h3>
+      <p><code>/memory</code> คือแผงควบคุม: ดูไฟล์ CLAUDE.md ทั้งหมดที่โหลดอยู่ (project, user, rules), สวิตช์เปิด/ปิด, เปิดไฟล์ memory ใน editor และเปิดดูโฟลเดอร์โน้ตของ Claude</p>
+<pre><span class="c">// .claude/settings.json · ปิด auto-memory</span>
+{ <span class="s">"autoMemoryEnabled"</span>: false }
+
+<span class="c">// user หรือ local settings · ย้ายที่เก็บ</span>
+{ <span class="s">"autoMemoryDirectory"</span>: "/path/to/custom/memory" }
+
+<span class="c"># CI/CD: ไม่ให้ Claude จดเรื่อง build env</span>
+export CLAUDE_CODE_DISABLE_AUTO_MEMORY=1</pre>
+    </div>
+    <div class="panel hi">
+      <h3>Demo: สั่งให้จำเอง</h3>
+<pre>&gt; note that we use tabs for
+  indentation, not spaces</pre>
+      <p>Claude ค้นหา MEMORY.md ไม่เจอ จึงสร้างใหม่พร้อมไฟล์ย่อย มี frontmatter <code>type: feedback</code> และเหตุผล "user explicitly stated this is project's convention"</p>
+      <p>ประโยคอื่นที่ใช้ได้: "remember that we use pnpm, not npm", "save to memory that the API tests require a local Redis instance", "note that the staging environment uses port 3001"</p>
+      <p class="note">ระบุปลายทางได้ เช่น "save this into CLAUDE.md" ถ้าไม่ระบุ Claude จะเลือกเอง</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 3 · Skills</div>
+  <h2>งานที่ไม่ใช่การเขียนโค้ดจะอยู่ตรงไหน</h2>
+  <p class="lead">"สร้าง PowerPoint สรุปสถาปัตยกรรมแอปนี้" หรือ "เอา CSV ไปทำความสะอาดแล้วทำรายงาน Excel พร้อมกราฟ" ไม่เกี่ยวกับกฎ React เลย</p>
+  <div class="grid2">
+    <div class="panel warn">
+      <h3>ใส่ใน CLAUDE.md หรือ rules?</h3>
+      <p>สองอย่างนี้เปิดอยู่ตลอด token ของคำสั่งทำสไลด์จะนั่งกินที่ใน context แม้คุณแค่แก้ component ส่วน path‑scoped rules ก็ช่วยไม่ได้ เพราะงานพวกนี้ไม่ผูกกับไฟล์โค้ด</p>
+    </div>
+    <div class="panel warn">
+      <h3>พิมพ์ prompt ใหม่ทุกครั้ง?</h3>
+      <p>สองวันต่อมา prompt ก็เปลี่ยนไป ผลลัพธ์ไม่สม่ำเสมอ</p>
+    </div>
+  </div>
+  <div class="panel hi">
+    <h3>อุปมาโรงพยาบาล</h3>
+    <p>หมอทุกคนล้างมือ บันทึกเวชระเบียน แต่งกายตามกฎ นั่นคือ CLAUDE.md และ rules แต่เมื่อคนไข้ต้องผ่าตัดหัวใจ เราเรียกหมอหัวใจมาคนเดียว หมอทั่วไปแค่ต้องรู้ว่าเมื่อไหร่ควรเรียกผู้เชี่ยวชาญ Skills ทำงานแบบนี้</p>
+  </div>
+  <p class="note">อีกภาพหนึ่ง: CLAUDE.md เหมือนแบกกล่องเครื่องมือทั้งกล่องไปทุกที่ จะไปซ่อมก๊อกน้ำรั่วก็ยังต้องหิ้วเลื่อยยนต์ ชุดเชื่อมเหล็ก และแปรงทาสีไปด้วย ทั้งที่ token ใน context window เป็นพื้นที่ราคาแพง</p>
+</section>
+
+<!-- 12 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 3 · Skills</div>
+  <h2>Progressive disclosure: โหลดความรู้เมื่อต้องใช้</h2>
+  <p>เหมือนแอปในมือถือ ระบบรู้แค่ชื่อกับไอคอนของทุกแอป แต่โหลดแอปเต็มๆ เมื่อคุณแตะเท่านั้น เปรียบได้กับเมนูที่วางให้ดูก่อน แต่อาหารมาเสิร์ฟเมื่อสั่ง</p>
+  <div class="flow">
+    <div class="step"><span class="n">1 · เริ่ม session</span><h3>โหลดแค่ metadata</h3><p>name + description ของทุก skill จาก frontmatter</p></div>
+    <div class="step"><span class="n">2 · ระหว่างคุย</span><h3>Claude ตัดสินใจ</h3><p>งานนี้ตรงกับ description ของ skill ไหนหรือไม่</p></div>
+    <div class="step"><span class="n">3 · เมื่อตรง</span><h3>โหลดเต็ม</h3><p>คำสั่งใน body, scripts, templates และไฟล์อ้างอิง</p></div>
+  </div>
+  <div class="grid2">
+    <div class="panel"><span class="tag">ตัวอย่าง</span><p>มี 100 skills ตอนเริ่มโหลดแค่ metadata ทั้ง 100 ถ้าใช้จริง 2 ตัว ก็โหลดเต็มแค่ 2 ตัวนั้น</p></div>
+    <div class="panel"><span class="tag">เรียกใช้ได้ 2 ทาง</span><p>Claude เลือกเองจาก prompt เช่น "analyze the issue 123" หรือเรียกตรงด้วย <code>/analyze-issue 123</code></p></div>
+  </div>
+</section>
+
+<!-- 13 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 3 · Skills</div>
+  <h2>Agent Skills คือมาตรฐานเปิด</h2>
+  <div class="grid2">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <p>เดิมแต่ละผลิตภัณฑ์ AI เพิ่มความสามารถด้วยชื่อและรูปแบบของตัวเอง Agent Skills จึงเกิดขึ้นเป็นมาตรฐานกลาง ตอนนี้ Cursor, GitHub Copilot, Gemini CLI และ Claude Code ใช้แล้ว</p>
+      <p>Claude Code เพิ่มความสามารถบนมาตรฐานนี้ ได้แก่ การควบคุมว่าใครเรียกใช้ได้, รันใน sub‑agent และ dynamic context injection</p>
+      <p class="note">ต่อยอดได้ เช่น แอปธนาคารที่มีหลาย domain (clients, fraud detection, payments) สร้าง skill ต่อ domain แล้วผูกกับ agent</p>
+    </div>
+    <div class="panel">
+      <span class="tag">Bundled skills ที่มีมาให้</span>
+      <ul>
+        <li><code>/simplify</code> รีวิวไฟล์ที่เพิ่งแก้ เรื่อง reuse, คุณภาพ, ประสิทธิภาพ โดยรัน review agent 3 ตัวพร้อมกันแล้วแก้ให้</li>
+        <li><code>/debug</code> ไล่ปัญหาของ session จาก debug log</li>
+        <li><code>/loop</code>, <code>/batch</code>, <code>/claude-api</code></li>
+      </ul>
+      <p class="note">ก่อนสร้าง skill เอง ให้เช็คใน docs ก่อนว่ามีแบบ bundled อยู่แล้วหรือยัง</p>
+    </div>
+  </div>
+</section>
+
+<!-- 14 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 3 · Skills</div>
+  <h2>โครงสร้างของ skill</h2>
+  <div class="grid2">
+<pre class="tree">.claude/skills/
+└── analyze-issue/     <span class="c">← ชื่อ = ชื่อ skill</span>
+    ├── SKILL.md       <span class="c">← บังคับ</span>
+    ├── scripts/       <span class="c">← Python / bash</span>
+    ├── references/    <span class="c">← docs, API guide</span>
+    └── assets/        <span class="c">← templates, รูปภาพ</span></pre>
+    <ul>
+      <li><b>SKILL.md</b> วิธีคิดโดยรวม: frontmatter + คำสั่งแบบ markdown</li>
+      <li><b>scripts/</b> เครื่องมือ เหมาะกับงานที่ต้องได้ผลตายตัวทุกครั้ง</li>
+      <li><b>references/</b> ความรู้เฉพาะทาง อ้างถึงจาก SKILL.md</li>
+      <li><b>assets/</b> วัตถุดิบ เช่น template เอกสารหรือสไลด์</li>
+      <li>ระดับผู้ใช้เก็บที่ <code>~/.claude/skills/</code></li>
+    </ul>
+  </div>
+  <div class="flow">
+    <div class="step"><span class="n">ขั้นที่ 1</span><h3>สร้างโฟลเดอร์</h3><p><code>mkdir -p .claude/skills/analyze-issue</code></p></div>
+    <div class="step"><span class="n">ขั้นที่ 2</span><h3>เขียน SKILL.md</h3><p>YAML frontmatter ระหว่าง <code>---</code> (name กลายเป็น slash command, description ใช้ตัดสินใจโหลดอัตโนมัติ) ตามด้วยคำสั่ง markdown</p></div>
+    <div class="step"><span class="n">ขั้นที่ 3</span><h3>ทดสอบ</h3><p>ให้ Claude เลือกเองจาก prompt หรือเรียกตรงด้วย slash command</p></div>
+  </div>
+  <p class="note">โครงสร้างนี้เลียนแบบวิธีคิดของผู้เชี่ยวชาญ: หลักการทั่วไป (SKILL.md), ความรู้เฉพาะ (references/), เครื่องมือ (scripts/) และวัตถุดิบ (assets/)</p>
+</section>
+
+<!-- 15 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 3 · Skills</div>
+  <h2>ฟิลด์ใน frontmatter</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ฟิลด์</th><th>หน้าที่</th></tr></thead>
+      <tbody>
+        <tr><td><code>name</code></td><td>ชื่อ skill และชื่อ slash command ถ้าไม่ใส่จะใช้ชื่อโฟลเดอร์</td></tr>
+        <tr><td><code>description</code></td><td>บอกว่าทำอะไรและใช้เมื่อไหร่ Claude ใช้ตัดสินใจว่าจะโหลดอัตโนมัติหรือไม่ (แนะนำให้ใส่)</td></tr>
+        <tr><td><code>argument-hint</code></td><td>คำใบ้ตอน autocomplete เช่น <code>[issue-number]</code></td></tr>
+        <tr><td><code>disable-model-invocation</code></td><td><code>true</code> = Claude เรียกเองไม่ได้ และไม่โหลด metadata ตอนเริ่ม session</td></tr>
+        <tr><td><code>user-invocable</code></td><td><code>false</code> = ผู้ใช้เรียกผ่าน slash command ไม่ได้ (ค่าเริ่มต้น true)</td></tr>
+        <tr><td><code>allowed-tools</code></td><td>tools ที่อนุญาตระหว่างรัน skill เช่น Read, Grep, Glob</td></tr>
+        <tr><td><code>model</code></td><td>เลือก model ที่ใช้รัน skill</td></tr>
+        <tr><td><code>context: fork</code></td><td>รันใน sub‑agent แยก ไม่ปนกับบทสนทนาหลัก</td></tr>
+        <tr><td><code>agent</code></td><td>ชนิด agent เมื่อ fork: Explore, Plan, general-purpose หรือ custom agent</td></tr>
+        <tr><td><code>hooks</code></td><td>ผูก hooks เข้ากับ lifecycle ของ skill</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 16 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 3 · Skills</div>
+  <h2>ตัวแปรและ dynamic context</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>String substitution</h3>
+      <ul>
+        <li><code>$ARGUMENTS</code> ทุกอย่างที่ผู้ใช้ส่งมา</li>
+        <li><code>$0</code>, <code>$1</code>, <code>$2</code> อาร์กิวเมนต์ทีละตัว</li>
+        <li><code>${CLAUDE_SESSION_ID}</code> ID ของ session</li>
+        <li><code>${CLAUDE_SKILL_DIR}</code> โฟลเดอร์ที่มี SKILL.md</li>
+      </ul>
+    </div>
+    <div class="panel hi">
+      <h3>Dynamic context ด้วย <code>!</code></h3>
+      <p>คำสั่ง bash หลัง <code>!</code> จะรันก่อน Claude อ่าน skill แล้วแทนที่ด้วยผลลัพธ์ ประหยัด token เพราะ Claude ไม่ต้องหาคำสั่งและรันเอง</p>
+    </div>
+  </div>
+<pre><span class="k">## Dynamic Context</span>
+- Repository remote: !`git remote get-url origin`
+- Current branch:    !`git branch --show-current`
+- Issue:             !`gh issue view <span class="s">$ARGUMENTS</span> --json title,body,labels,comments,state`</pre>
+</section>
+
+<!-- 18 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 3 · Skills</div>
+  <h2>รัน skill ใน sub‑agent ด้วย <code>context: fork</code></h2>
+  <div class="grid2">
+<pre><span class="k">---</span>
+<span class="k">name:</span> wiki-ask
+<span class="k">description:</span> Answer a question from
+  the team wiki with [[page]] citations
+<span class="k">argument-hint:</span> <span class="s">"&lt;question&gt;"</span>
+<span class="k">context:</span> fork
+<span class="k">agent:</span> Explore
+<span class="k">---</span>
+Read index.md first, then open only the
+relevant pages in wiki/.
+Answer with [[page]] citations.
+If the wiki has no coverage, say so.
+Never fill gaps from model knowledge.</pre>
+    <ul>
+      <li>เนื้อหา skill กลายเป็น prompt ของ sub‑agent ที่มองไม่เห็นบทสนทนาหลัก</li>
+      <li><code>agent</code> กำหนดสภาพแวดล้อม (model, tools, permissions) ถ้าไม่ใส่จะใช้ general-purpose</li>
+      <li>Explore มีแต่ tools แบบอ่านอย่างเดียว เหมาะกับงานค้นและอ่าน</li>
+      <li>sub‑agent เปิดอ่าน wiki กี่หน้าก็ได้ แต่ส่งกลับมาแค่คำตอบพร้อมอ้างอิง context หลักจึงไม่บวม</li>
+    </ul>
+  </div>
+</section>
+
+<!-- CLAUDE.md vs Skills -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 3 · Skills</div>
+  <h2>CLAUDE.md กับ Skills ใช้ context ต่างกันแค่ไหน</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th></th><th>จุดประสงค์</th><th>เหมาะกับ</th><th>ตัวอย่าง</th></tr></thead>
+      <tbody>
+        <tr><td>CLAUDE.md</td><td>เก็บแนวทางระยะยาวที่ต้องใช้สม่ำเสมอทุกแชท</td><td>มาตรฐานทีม, ความชอบด้าน coding, กฎของโปรเจกต์</td><td>"Follow our layered architecture. Prefer constructor injection. Use Maven wrapper for all builds."</td></tr>
+        <tr><td>Skill</td><td>ความรู้เฉพาะงาน, workflow หรือเอกสารอ้างอิงที่ใช้เมื่อจำเป็น</td><td>ขั้นตอนที่ทำซ้ำ, domain playbook, เอกสารภายใน</td><td>release skill ที่พาทำ version bump, อัปเดต changelog, tag และ publish artifact</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <span class="tag">ตอนเริ่ม session</span>
+      <h3>CLAUDE.md: โหลดทั้งไฟล์</h3>
+      <p>อยู่ใน context ตลอดและถูกส่งไปกับทุก prompt ใช้ context สูง</p>
+      <h3>Skills: โหลดแค่ metadata</h3>
+      <p>เฉพาะ name กับ description ใช้ context ต่ำ</p>
+    </div>
+    <div class="panel hi">
+      <span class="tag">ตอนใช้งาน</span>
+      <h3>Skill ที่ถูกเรียก: โหลดเต็ม</h3>
+      <p>เนื้อหาทั้งหมดของ skill เข้า context เฉพาะตอนที่ใช้ skill นั้น</p>
+      <p class="note">skill ที่ตั้ง <code>disable-model-invocation: true</code> จะไม่เข้า context เลย จนกว่าผู้ใช้เรียกด้วย slash command</p>
+    </div>
+  </div>
+</section>
+
+<!-- Commands 1 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 4 · Commands (legacy)</div>
+  <h2>Command คือ markdown ไฟล์เดียวที่กลายเป็น slash command</h2>
+  <div class="grid2">
+    <div style="display:flex;flex-direction:column;gap:14px">
+<pre>.claude/commands/review.md  →  /review
+.claude/commands/commit.md  →  /commit
+.claude/commands/deploy.md  →  /deploy</pre>
+      <p>ชื่อไฟล์ (ตัด .md) คือชื่อ command ไม่ต้อง compile ไม่ต้องลงทะเบียน วางไฟล์ถูกที่ก็ใช้ได้เลย</p>
+      <p>Skills คือรุ่นถัดไปของ commands: command ต้องให้ผู้ใช้พิมพ์เรียกเสมอ ส่วน skill ให้ Claude ค้นเจอและเรียกเองได้เมื่องานตรงกับ description</p>
+    </div>
+    <div class="panel">
+      <span class="tag">ถูก deprecate แล้วหรือยัง? ใช่</span>
+      <blockquote>"Custom commands have been merged into skills. A file at .claude/commands/review.md and a skill at .claude/skills/review/SKILL.md both create /review and work the same way. Your existing .claude/commands/ files keep working. Skills add optional features."</blockquote>
+      <ul>
+        <li>command เดิมยังใช้ได้ และรองรับ frontmatter แบบเดียวกับ skill</li>
+        <li>ถ้าชื่อซ้ำกัน skill ชนะ</li>
+        <li>งานใหม่ควรเป็น skill</li>
+        <li>community กำลังย้าย แม้แต่ repo plugins ทางการก็ยังมี issue เรื่อง plugin ที่ใช้ commands อยู่</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- Commands 2 -->
+<section class="slide" hidden>
+  <div class="eyebrow">Part 4 · Commands (legacy)</div>
+  <h2>Commands กับ Skills เทียบกันทีละข้อ</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>ด้าน</th><th>Commands (legacy)</th><th>Skills (ปัจจุบัน)</th></tr></thead>
+      <tbody>
+        <tr><td>ที่อยู่</td><td><code>.claude/commands/file.md</code></td><td><code>.claude/skills/name/SKILL.md</code></td></tr>
+        <tr><td>โครงสร้าง</td><td>markdown ไฟล์เดียว</td><td>โฟลเดอร์พร้อมไฟล์ประกอบ</td></tr>
+        <tr><td>การเรียกใช้</td><td>ผู้ใช้เท่านั้น (<code>/command</code>)</td><td>ผู้ใช้ และ/หรือ Claude ค้นเจอเอง</td></tr>
+        <tr><td>ไฟล์ประกอบ</td><td>ไม่รองรับ</td><td>templates, scripts, examples, references</td></tr>
+        <tr><td>โหลดอัตโนมัติ</td><td>ไม่เคย ต้องพิมพ์ <code>/</code></td><td>ได้ ตาม description ที่ตรงกับงาน</td></tr>
+        <tr><td>Sub‑agent</td><td>ไม่รองรับ</td><td>รองรับ (<code>context: fork</code>)</td></tr>
+        <tr><td>สถานะ</td><td>Deprecated (ยังใช้ได้)</td><td>แนวทางที่แนะนำ</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">Demo <code>/investigate-change Footer.jsx:171-182</code>: git forensic ด้วย git blame, timeline ของ commit, ผู้เขียน และ ticket ที่เกี่ยวข้อง บันทึกเป็นรายงาน เคล็ดลับ: ใช้ <code>/btw</code> ถามคำถามข้างเคียงได้โดยไม่ขัดงานที่ Claude ทำอยู่</p>
+</section>
+
+<!-- 20 -->
+<section class="slide" hidden>
+  <div class="eyebrow">สรุป</div>
+  <h2>CLAUDE.md, Rules และ Skills ต่างกันอย่างไร</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th></th><th>CLAUDE.md</th><th>Rules</th><th>Skills</th></tr></thead>
+      <tbody>
+        <tr><td>บอก Claude ว่า</td><td>ควรทำตัวอย่างไร (passive)</td><td>ควรทำตัวอย่างไร (passive)</td><td>ทำงานนี้อย่างไร (active)</td></tr>
+        <tr><td>จุดประสงค์</td><td>context ทั่วไปของโปรเจกต์</td><td>guideline ตามขอบเขตไฟล์</td><td>workflow เฉพาะงาน</td></tr>
+        <tr><td>เปรียบเหมือน</td><td>เอกสาร onboarding</td><td>คู่มือ coding standards</td><td>playbook / SOP</td></tr>
+        <tr><td>โหลดเมื่อ</td><td>ทุก session</td><td>ทุก session หรือเมื่อ path ตรง</td><td>เมื่องานตรง หรือผู้ใช้เรียก /skill</td></tr>
+        <tr><td>ใครเป็นคนเรียก</td><td>อัตโนมัติ</td><td>อัตโนมัติ</td><td>ผู้ใช้ (/skill) หรือ Claude (auto‑discovery)</td></tr>
+        <tr><td>โครงสร้าง</td><td>ไฟล์เดียว</td><td>ไฟล์ละเรื่องในโฟลเดอร์</td><td>โฟลเดอร์ + SKILL.md + ไฟล์ประกอบ</td></tr>
+        <tr><td>Priority</td><td>สูง (authoritative)</td><td>สูง (authoritative)</td><td>ต่ำจนกว่าถูกเรียก แล้วจึงสูง</td></tr>
+        <tr><td>Token cost</td><td>สูงเสมอ</td><td>สูง หรือตามต้องการ</td><td>ต่ำ จนกว่าจะถูกเรียก</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 21 -->
+<section class="slide" hidden>
+  <div class="eyebrow">นำไปใช้</div>
+  <h2>เริ่มจากตรงไหนดี</h2>
+  <div class="grid2">
+    <div class="panel">
+      <h3>1. ผ่า CLAUDE.md</h3>
+      <p>เหลือแค่กฎสากลใน CLAUDE.md ย้ายเรื่องเฉพาะทางไป <code>.claude/rules/</code> และใส่ <code>paths</code> ให้กฎที่ผูกกับโฟลเดอร์</p>
+    </div>
+    <div class="panel">
+      <h3>2. ดูแล auto‑memory</h3>
+      <p>เปิดดูโฟลเดอร์ memory เดือนละครั้ง ให้ MEMORY.md อยู่ใต้ 200 บรรทัด</p>
+    </div>
+    <div class="panel">
+      <h3>3. หางานที่ทำซ้ำ</h3>
+      <p>เช่น สรุปสถานะ daily standup จาก <code>git log</code>, วิเคราะห์ issue, ออก release แล้วแปลงเป็น skill เพื่อให้ได้ผลลัพธ์รูปแบบเดิมทุกครั้ง</p>
+    </div>
+    <div class="panel">
+      <h3>4. ย้าย commands ไป skills</h3>
+      <p>ถ้า repo ยังใช้ <code>.claude/commands/</code> ให้ทยอยย้ายเป็น skill เพื่อได้ auto‑discovery และ sub‑agent</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<nav class="navbar" aria-label="เปลี่ยนสไลด์">
+  <button id="prev" type="button" aria-label="สไลด์ก่อนหน้า">← ก่อนหน้า</button>
+  <div class="progress" aria-hidden="true"><span id="bar"></span></div>
+  <span class="count" id="count"></span>
+  <button id="next" type="button" aria-label="สไลด์ถัดไป">ถัดไป →</button>
+</nav>
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  const bar = document.getElementById('bar');
+  const count = document.getElementById('count');
+  let current = 0;
+
+  function indexFromHash(){
+    const match = /^#s(\d+)$/.exec(location.hash);
+    const n = match ? parseInt(match[1], 10) - 1 : 0;
+    return Math.min(Math.max(n, 0), slides.length - 1);
+  }
+
+  function show(i){
+    current = Math.min(Math.max(i, 0), slides.length - 1);
+    slides.forEach((s, idx) => { s.hidden = idx !== current; });
+    slides[current].scrollTop = 0;
+    bar.style.width = ((current + 1) / slides.length * 100) + '%';
+    count.textContent = (current + 1) + ' / ' + slides.length;
+    prev.disabled = current === 0;
+    next.disabled = current === slides.length - 1;
+    try { history.replaceState(null, '', '#s' + (current + 1)); } catch (e) {}
+  }
+
+  prev.addEventListener('click', () => show(current - 1));
+  next.addEventListener('click', () => show(current + 1));
+  document.addEventListener('keydown', (e) => {
+    if (['ArrowRight','PageDown',' '].includes(e.key)) { e.preventDefault(); show(current + 1); }
+    else if (['ArrowLeft','PageUp'].includes(e.key)) { e.preventDefault(); show(current - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+  });
+
+  let touchX = null;
+  document.getElementById('stage').addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; }, {passive:true});
+  document.getElementById('stage').addEventListener('touchend', (e) => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (Math.abs(dx) > 60) show(current + (dx < 0 ? 1 : -1));
+    touchX = null;
+  });
+
+  show(indexFromHash());
+})();
+</script>
+
+</body></html>
